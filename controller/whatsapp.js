@@ -111,18 +111,16 @@ const SendMessageWhatsApp = (textResponse, number='5215531014209') => {
 
 const GuardarMensajeRecibido =async (texto, telefono)=>{  
   try {
-    let newNumber = '';
-    if (telefono.length === 13 && telefono.startsWith('521') ) {
-      newNumber = '52' + telefono.slice(3,13);
-    }
     const mensaje = {
       fecha: dayjs().format('DD/MM/YYYY HH:mm a'),
       mensaje:texto,
       leido:false,
       emisor:'Paciente'
-    }
+    };
+
+    console.log(mensaje);
     const paciente = await Paciente.findOneAndUpdate(
-      {telefono:newNumber},
+      {telefono:telefono},
       { $push: { chats:mensaje }},
       {new:true});
 
