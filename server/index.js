@@ -125,9 +125,11 @@ io.on('connection', async (socket) => {
   socket.on('mensaje-personal', async (data, callback) => {
     const { telefono, nombre, emisor, fecha, leido, mensaje } = data;
     const ultimo = await guardarMensajeEnviado(telefono, user.email, { emisor, fecha, leido, mensaje });
-    callback(ultimo);
-    socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.email));
-    SendMessageWhatsApp(mensaje, telefono);
+    if (ultimo) {
+      callback(ultimo);
+      SendMessageWhatsApp(mensaje, telefono);
+      socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.email));
+    }
   });
 
   socket.on('disconnect', () => {
