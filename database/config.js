@@ -3,10 +3,7 @@ const mongoose = require('mongoose');
 
 const dbConnection = async ()=>{
   try {
-    await mongoose.connect('mongodb+srv://daniellopez:syiXemdmq1fnDkzM@cursosbackend.iq9nqyt.mongodb.net/asignacion-mensaje',{
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    }); 
+    await mongoose.connect('mongodb+srv://daniellopez:syiXemdmq1fnDkzM@cursosbackend.iq9nqyt.mongodb.net/asignacion-mensaje'); 
     console.log('DB conectada');
   } catch (error) {
     console.log(error);

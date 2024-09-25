@@ -54,14 +54,19 @@ app.post('/api/whatsapp', async (req, res = express.response) => {
         newNumber = '52' + number.slice(3, 13);
       }
 
-      if (buscarNumeroExistente(newNumber) === false) {
-        const nuevoPendiente = await agregarPendientes(text, newNumber);
-        io.sockets.emit('nuevo-mensaje', `nuevo mensaje al numero: ${newNumber}`);
-        SendMessageWhatsApp(text);
-      };
-      const mensajeGuardado = await GuardarMensajeRecibido(text, newNumber);
-      io.sockets.emit('mis-mensajes', await obtenerPacientesPorUsuario(UsuarioActual.email));
-      SendMessageWhatsApp(text);
+      console.log('numeroEnAsignar: ', newNumber);
+      console.log(UsuarioActual);
+      if (buscarNumeroExistente(newNumber, UsuarioActual.email)) {
+        console.log('encontrado');
+        // const mensajeGuardado = await GuardarMensajeRecibido(text, newNumber);
+        // io.sockets.emit('mis-mensajes', await obtenerPacientesPorUsuario(UsuarioActual.email));
+        // SendMessageWhatsApp(text);
+      }else{
+        console.log('no encontrado');
+        // const nuevoPendiente = await agregarPendientes(text, newNumber);
+        // io.sockets.emit('nuevo-mensaje', `nuevo mensaje al numero: ${newNumber}`);
+        // SendMessageWhatsApp(text);
+      }
     };
     res.send('EVENT_RECEIVED');
   } catch (error) {
@@ -75,31 +80,45 @@ app.post('/api/sinAsignar', [
   check('mensaje', 'El mensaje es obligatorio').not().isEmpty()],
   async (req, res = express.response) => {
     try {
-      const nuevoMensaje = req.body;
-      const { telefono, mensaje } = nuevoMensaje;
-      const fecha = dayjs().format('DD/MM/YYYY HH:mm a');
-      const agregarMensaje = await sinAsignar.create({ telefono, mensaje, fecha });
-      io.emit('mensajes-sinAsignar', await obtenerPendientes());
-      // ----------------
-      const mensajeGuardado = await GuardarMensajeRecibido(text, number);
-      io.sockets.emit('mis-mensajes', await obtenerPacientesPorUsuario(UsuarioActual.email));
+    const entry = req.body['entry'][0];
+    const changes = entry['changes'][0];
+    const value = changes['value'];
+    const messageObject = value['messages'];
+    if (typeof messageObject !== 'undefined') {
+      const messages = messageObject[0];
+      const text = GetTextUser(messages);
+      const number = messages['from'];
+      console.log('Mensaje: ', text);
+      console.log('Para: ', number);
 
-      // -------------
-      return res.json({
-        mensaje: agregarMensaje
-      });
-    } catch (error) {
-      console.log(error)
-      return res.status(500).json({
-        response: 'No se pudo guardar el mensaje'
-      });
+      let newNumber = '';
+      if (number.length === 13 && number.startsWith('521')) {
+        newNumber = '52' + number.slice(3, 13);
+      }
+
+      console.log('numeroEnAsignar: ', newNumber);
+      if (buscarNumeroExistente(newNumber) === false) {
+        const nuevoPendiente = await agregarPendientes(text, newNumber);
+        io.sockets.emit('nuevo-mensaje', `nuevo mensaje al numero: ${newNumber}`);
+        SendMessageWhatsApp(text);
+      }else{
+        const mensajeGuardado = await GuardarMensajeRecibido(text, newNumber);
+        io.sockets.emit('mis-mensajes', await obtenerPacientesPorUsuario(UsuarioActual.email));
+        SendMessageWhatsApp(text);
+      }
     };
+    res.send('EVENT_RECEIVED');
+  } catch (error) {
+    console.log(error);
+    // myConsole.log(error);
+    res.send('EVENT_RECEIVED');
+  };
   });
 
 
 //io
 io.on('connection', async (socket) => {
-  // console.log(socket.handshake.query['auth']);
+  console.log(socket.handshake.query['auth']);
   const [valido, user] = comprobarJWT(socket.handshake.query['auth']);
   if (!valido) {
     console.log('socket no identificado');

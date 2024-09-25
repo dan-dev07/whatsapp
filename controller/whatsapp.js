@@ -72,16 +72,13 @@ const GetTextUser = (messages) => {
   return text;
 };
 
-const SendMessageWhatsApp = (textResponse, number='5215531014209') => {
-  let newNumber = '';
-  if (number.length === 13 && number.startsWith('521') ) {
-    newNumber = '52' + number.slice(-10);
-  }
+const SendMessageWhatsApp = (textResponse, number='525531014209') => {
 
+  console.log('SendMessage: ', number);
   const data = JSON.stringify({
     "messaging_product": "whatsapp",
     "recipient_type": "individual",
-    "to": newNumber,
+    "to": number,
     "type": "text",
     "text": {
       "body": textResponse
@@ -103,7 +100,7 @@ const SendMessageWhatsApp = (textResponse, number='5215531014209') => {
     });  
   });
   req.on('error', error =>{
-    console.error(error);
+    console.error('error: ',error);
   });
   req.write(data);
   req.end();
@@ -117,15 +114,13 @@ const GuardarMensajeRecibido =async (texto, telefono)=>{
       leido:false,
       emisor:'Paciente'
     };
-
-    console.log(mensaje);
     const paciente = await Paciente.findOneAndUpdate(
-      {telefono:telefono},
+      {telefono},
       { $push: { chats:mensaje }},
       {new:true});
-
-    const ultimo = paciente.chats[paciente.chats.length -1];
-    return ultimo;
+    
+    // const ultimo = paciente.chats[paciente.chats.length -1];
+    // return ultimo;
   } catch (error) {
     console.log(error);
     return 'No se pudo guardar el mensaje';

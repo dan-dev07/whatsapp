@@ -1,4 +1,5 @@
 const Paciente = require('../models/paciente');
+// const sinAsignar = require('../models/sinAsignar');
 const SinAsignar = require('../models/sinAsignar');
 const { v4: uuidv4 } = require('uuid');
 
@@ -87,15 +88,14 @@ const ultimoMensaje = async()=>{
   };
 };
 
-const buscarNumeroExistente = (telefono) => {
+const buscarNumeroExistente = (telefono, email) => {
   console.log(telefono);
-  const numeroExistente = Paciente.findOne({telefono});
-
-  if (numeroExistente !== null ) {
-    return true;
-  }
-
-  return false;
+  const numeroExistente = Paciente.findOne({telefono, 'usuarioAsignado.email': email});
+  console.log('numeroExistente: ', numeroExistente);
+  if (!numeroExistente) {
+    return false;
+  };
+  return true;
 }
 module.exports = {
   agregarPaciente,

@@ -22,6 +22,10 @@ const obtenerPendientes = async () => {
 const agregarPendientes = async(mensaje, telefono) => {
   try {    
     const fecha = dayjs().format('DD/MM/YYYY HH:mm a');
+
+    //buscar en pendientes 
+
+    //guardar mensaje
     const agregarMensaje = await SinAsignar({telefono, mensaje, fecha});
     agregarMensaje.save();
     console.log('Mensaje enviado');
