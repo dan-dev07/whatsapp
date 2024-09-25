@@ -12,7 +12,7 @@ const sinAsignar = require('../models/sinAsignar');
 const { VerifyToken, GuardarMensajeRecibido, SendMessageWhatsApp, GetTextUser } = require('../controller/whatsapp');
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const server = require('http').createServer(app);
 const io = socketio(server, {
   cors: {
