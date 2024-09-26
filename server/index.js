@@ -5,10 +5,10 @@ const dayjs = require('dayjs');
 const { dbConnection } = require('../database/config');
 const socketio = require('socket.io');
 const { comprobarJWT } = require('../helpers/jwt');
-const { obtenerPendientes, agregarPendientes } = require('../controller/sinAsignar');
+const { obtenerPendientes, agregarPendientes, agregarNuevoPendiente, agregarNuevoMensajePendiente } = require('../controller/sinAsignar');
 const { obtenerPacientesPorUsuario, agregarPaciente, obtenerConversacionActual, guardarMensajeEnviado, buscarNumeroExistente } = require('../controller/paciente');
 const { check } = require('express-validator');
-const sinAsignar = require('../models/sinAsignar');
+const SinAsignar = require('../models/sinAsignar');
 const { VerifyToken, GuardarMensajeRecibido, SendMessageWhatsApp, GetTextUser } = require('../controller/whatsapp');
 
 const app = express();
@@ -56,18 +56,25 @@ app.post('/api/whatsapp', async (req, res = express.response) => {
 
       console.log('numeroEnAsignar: ', newNumber);
       console.log(UsuarioActual);
-      if ( await buscarNumeroExistente(newNumber)) {
-        console.log('encontrado');
-        const mensajeGuardado = await GuardarMensajeRecibido(text, newNumber);
+
+      const res = await buscarNumeroExistente(newNumber);
+      if (res === false) {
+        await agregarPendientes(text, newNumber);
+        console.log('pendiente agregado');
+        io.sockets.emit('mensajes-sinAsignar', await obtenerPendientes());
         io.sockets.emit('mis-mensajes', await obtenerPacientesPorUsuario(UsuarioActual.email));
-        SendMessageWhatsApp(text);
       }else{
-        console.log('no encontrado');
-        const nuevoPendiente = await agregarPendientes(text, newNumber);
-        io.sockets.emit('nuevo-mensaje', `nuevo mensaje al numero: ${newNumber}`);
+        const ultimo = await GuardarMensajeRecibido(text, newNumber);
+        console.log('paciente actualizado');
+        io.sockets.emit('mis-mensajes', await obtenerPacientesPorUsuario(UsuarioActual.email));
+        io.sockets.emit('mensaje-recibido', {ultimo, telefono:newNumber } );
         SendMessageWhatsApp(text);
       }
     };
+    io.on('connection', async (socket)=>{
+
+    })
+    
     res.send('EVENT_RECEIVED');
   } catch (error) {
     console.log(error);
@@ -80,39 +87,39 @@ app.post('/api/sinAsignar', [
   check('mensaje', 'El mensaje es obligatorio').not().isEmpty()],
   async (req, res = express.response) => {
     try {
-    const entry = req.body['entry'][0];
-    const changes = entry['changes'][0];
-    const value = changes['value'];
-    const messageObject = value['messages'];
-    if (typeof messageObject !== 'undefined') {
-      const messages = messageObject[0];
-      const text = GetTextUser(messages);
-      const number = messages['from'];
-      console.log('Mensaje: ', text);
-      console.log('Para: ', number);
+      const entry = req.body['entry'][0];
+      const changes = entry['changes'][0];
+      const value = changes['value'];
+      const messageObject = value['messages'];
+      if (typeof messageObject !== 'undefined') {
+        const messages = messageObject[0];
+        const text = GetTextUser(messages);
+        const number = messages['from'];
+        console.log('Mensaje: ', text);
+        console.log('Para: ', number);
 
-      let newNumber = '';
-      if (number.length === 13 && number.startsWith('521')) {
-        newNumber = '52' + number.slice(3, 13);
-      }
+        let newNumber = '';
+        if (number.length === 13 && number.startsWith('521')) {
+          newNumber = '52' + number.slice(3, 13);
+        }
 
-      console.log('numeroEnAsignar: ', newNumber);
-      if (buscarNumeroExistente(newNumber) === false) {
-        const nuevoPendiente = await agregarPendientes(text, newNumber);
-        io.sockets.emit('nuevo-mensaje', `nuevo mensaje al numero: ${newNumber}`);
-        SendMessageWhatsApp(text);
-      }else{
-        const mensajeGuardado = await GuardarMensajeRecibido(text, newNumber);
-        io.sockets.emit('mis-mensajes', await obtenerPacientesPorUsuario(UsuarioActual.email));
-        SendMessageWhatsApp(text);
-      }
+        console.log('numeroEnAsignar: ', newNumber);
+        if (buscarNumeroExistente(newNumber) === false) {
+          await agregarPendientes(text, newNumber);
+          io.sockets.emit('nuevo-mensaje', `nuevo mensaje al numero: ${newNumber}`);
+          SendMessageWhatsApp(text);
+        } else {
+          const mensajeGuardado = await GuardarMensajeRecibido(text, newNumber);
+          io.sockets.emit('mis-mensajes', await obtenerPacientesPorUsuario(UsuarioActual.email));
+          SendMessageWhatsApp(text);
+        }
+      };
+      res.send('EVENT_RECEIVED');
+    } catch (error) {
+      console.log(error);
+      // myConsole.log(error);
+      res.send('EVENT_RECEIVED');
     };
-    res.send('EVENT_RECEIVED');
-  } catch (error) {
-    console.log(error);
-    // myConsole.log(error);
-    res.send('EVENT_RECEIVED');
-  };
   });
 
 
@@ -129,6 +136,13 @@ io.on('connection', async (socket) => {
   socket.emit('mensajes-sinAsignar', await obtenerPendientes());
   socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.email));
 
+  socket.on('mis-mensajes', async ({ }, callback) => {
+    console.log('regreso');
+    const msgs = await obtenerPacientesPorUsuario(user.email);
+    callback(msgs);
+    // socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.email));
+  });
+
   socket.on('paciente-asignado', async (data) => {
     await agregarPaciente(data);
     io.emit('mensajes-sinAsignar', await obtenerPendientes());
@@ -141,13 +155,15 @@ io.on('connection', async (socket) => {
     socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.email));
   });
 
-  socket.on('mensaje-personal', async (data, callback) => {
-    const { telefono, nombre, emisor, fecha, leido, mensaje } = data;
+  socket.on('mensaje-enviado', async (data, callback) => {
+    const { telefono, emisor, fecha, leido, mensaje } = data;
     const ultimo = await guardarMensajeEnviado(telefono, user.email, { emisor, fecha, leido, mensaje });
     if (ultimo) {
       callback(ultimo);
       SendMessageWhatsApp(mensaje, telefono);
       socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.email));
+    }else{
+      callback('no se pudo enviar el mensaje')
     }
   });
 

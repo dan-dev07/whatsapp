@@ -5,10 +5,7 @@ const SinAsignarSchema = Schema({
     type:String,
     required:true
   },
-  mensaje: {
-    type:String,
-    required:true
-  },
+  mensaje: [String],
   fecha:{
     type:String,
     required:true,

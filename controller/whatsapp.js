@@ -119,8 +119,8 @@ const GuardarMensajeRecibido =async (texto, telefono)=>{
       { $push: { chats:mensaje }},
       {new:true});
     
-    // const ultimo = paciente.chats[paciente.chats.length -1];
-    // return ultimo;
+    const ultimo = paciente.chats[paciente.chats.length -1];
+    return ultimo;
   } catch (error) {
     console.log(error);
     return 'No se pudo guardar el mensaje';

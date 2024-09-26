@@ -26,10 +26,10 @@ const agregarPaciente = async (datos) => {
 const obtenerPacientesPorUsuario = async (email) => {
   try {
     const pacientesPorUsuario = (await Paciente.find({'usuarioAsignado.email':email})).map(p =>{
-      const {telefono, chats, id} = p;
+      const {nombrePaciente, telefono, chats, id} = p;
       const ultimoMsg = chats[chats.length - 1];
       const {fecha, mensaje, leido} = ultimoMsg;
-      return {telefono, fecha, mensaje, id, leido};
+      return {nombrePaciente, telefono, id, fecha, mensaje, leido, mensajes:chats};
     });
     return pacientesPorUsuario.sort((a, b) => a.leido - b.leido );
   } catch (error) {
@@ -45,6 +45,8 @@ const guardarMensajeEnviado =async (telefono,email, mensaje)=>{
       { $push: { chats:mensaje } },
       {new:true});
 
+    console.log('paciente: ',paciente);
+    console.log(telefono, email, mensaje);
     const ultimo = paciente.chats[paciente.chats.length -1];
     return ultimo;
   } catch (error) {
@@ -73,26 +75,11 @@ const obtenerConversacionActual =async (telefono, email)=>{
   }
 }
 
-const ultimoMensaje = async()=>{
-  try {
-    const paciente = await Paciente.find({'usuarioAsignado.email':email})
-    if (paciente.length === 0) {
-      return [];
-    }
-    const arrayChat = [...paciente.chats];
-    const ultimoMensaje = arrayChat[arrayChat.length -1];
-
-    console.log(ultimoMensaje);
-  } catch (error) {
-    console.log(error);
-  };
-};
-
 const buscarNumeroExistente = async (telefono) => {
   console.log(telefono);
   const numeroExistente = await Paciente.findOne({telefono});
-  console.log('numeroExistente: ', numeroExistente);
-  if (numeroExistente === null) {
+  // console.log('numeroExistente: ', numeroExistente);
+  if (!numeroExistente) {
     return false;
   };
   return true;
