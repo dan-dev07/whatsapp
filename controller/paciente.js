@@ -88,11 +88,11 @@ const ultimoMensaje = async()=>{
   };
 };
 
-const buscarNumeroExistente = (telefono, email) => {
+const buscarNumeroExistente = async (telefono) => {
   console.log(telefono);
-  const numeroExistente = Paciente.findOne({telefono, 'usuarioAsignado.email': email});
+  const numeroExistente = await Paciente.findOne({telefono});
   console.log('numeroExistente: ', numeroExistente);
-  if (!numeroExistente) {
+  if (numeroExistente === null) {
     return false;
   };
   return true;

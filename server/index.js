@@ -56,16 +56,16 @@ app.post('/api/whatsapp', async (req, res = express.response) => {
 
       console.log('numeroEnAsignar: ', newNumber);
       console.log(UsuarioActual);
-      if (buscarNumeroExistente(newNumber, UsuarioActual.email)) {
+      if ( await buscarNumeroExistente(newNumber)) {
         console.log('encontrado');
-        // const mensajeGuardado = await GuardarMensajeRecibido(text, newNumber);
-        // io.sockets.emit('mis-mensajes', await obtenerPacientesPorUsuario(UsuarioActual.email));
-        // SendMessageWhatsApp(text);
+        const mensajeGuardado = await GuardarMensajeRecibido(text, newNumber);
+        io.sockets.emit('mis-mensajes', await obtenerPacientesPorUsuario(UsuarioActual.email));
+        SendMessageWhatsApp(text);
       }else{
         console.log('no encontrado');
-        // const nuevoPendiente = await agregarPendientes(text, newNumber);
-        // io.sockets.emit('nuevo-mensaje', `nuevo mensaje al numero: ${newNumber}`);
-        // SendMessageWhatsApp(text);
+        const nuevoPendiente = await agregarPendientes(text, newNumber);
+        io.sockets.emit('nuevo-mensaje', `nuevo mensaje al numero: ${newNumber}`);
+        SendMessageWhatsApp(text);
       }
     };
     res.send('EVENT_RECEIVED');
@@ -118,7 +118,7 @@ app.post('/api/sinAsignar', [
 
 //io
 io.on('connection', async (socket) => {
-  console.log(socket.handshake.query['auth']);
+  // console.log(socket.handshake.query['auth']);
   const [valido, user] = comprobarJWT(socket.handshake.query['auth']);
   if (!valido) {
     console.log('socket no identificado');
