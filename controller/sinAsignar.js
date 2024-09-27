@@ -39,7 +39,6 @@ const agregarPendientes = async (mensaje, telefono) => {
     if (!mensajePaciente) {
       //guardar mensaje
       const agregarMensaje = await SinAsignar.create({telefono, mensaje, fecha});
-      agregarMensaje.save();
       console.log('Pendiente guardado: ', agregarMensaje);
 
       return true;
