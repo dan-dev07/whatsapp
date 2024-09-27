@@ -27,8 +27,8 @@ dbConnection();
 app.use(express.static(__dirname + '/public'));
 
 //middlWares
+let UsuarioActual = [];
 //Parseo de los datos que llegan desde postman - Parseo del body
-let UsuarioActual = {};
 app.use(express.json());
 // CORS
 app.use(cors());
@@ -52,29 +52,28 @@ app.post('/api/whatsapp', async (req, res = express.response) => {
       let newNumber = '';
       if (number.length === 13 && number.startsWith('521')) {
         newNumber = '52' + number.slice(3, 13);
-      }
+      };
 
       console.log('numeroEnAsignar: ', newNumber);
       console.log(UsuarioActual);
 
       const res = await buscarNumeroExistente(newNumber);
-      if (res === false) {
+      if (res.ok === false) {
         await agregarPendientes(text, newNumber);
         console.log('pendiente agregado');
         io.sockets.emit('mensajes-sinAsignar', await obtenerPendientes());
-        io.sockets.emit('mis-mensajes', await obtenerPacientesPorUsuario(UsuarioActual.email));
+        // io.sockets.emit('mis-mensajes', await obtenerPacientesPorUsuario(UsuarioActual.email));
+        // io.to(res.usuarioAsignado.id).emit('mis-mensajes', await obtenerPacientesPorUsuario(UsuarioActual.email));
       }else{
         const ultimo = await GuardarMensajeRecibido(text, newNumber);
         console.log('paciente actualizado');
-        io.sockets.emit('mis-mensajes', await obtenerPacientesPorUsuario(UsuarioActual.email));
-        io.sockets.emit('mensaje-recibido', {ultimo, telefono:newNumber } );
+        // io.sockets.emit('mis-mensajes', await obtenerPacientesPorUsuario(UsuarioActual.email));
+        io.to(res.usuarioAsignado.id).emit('mis-mensajes', await obtenerPacientesPorUsuario(res.usuarioAsignado.email));
+        io.to(res.usuarioAsignado.id).emit('mensaje-recibido', {ultimo, telefono:newNumber });
+        // io.sockets.emit('mensaje-recibido', {ultimo, telefono:newNumber } );
         SendMessageWhatsApp(text);
       }
-    };
-    io.on('connection', async (socket)=>{
-
-    })
-    
+    };    
     res.send('EVENT_RECEIVED');
   } catch (error) {
     console.log(error);
@@ -132,13 +131,19 @@ io.on('connection', async (socket) => {
     return socket.disconnect();
   };
   console.log('Nuevo cliente conectado:', user);
-  UsuarioActual = user;
+
+  socket.join(user.id);
+
   socket.emit('mensajes-sinAsignar', await obtenerPendientes());
   socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.email));
 
-  socket.on('mis-mensajes', async ({ }, callback) => {
+  socket.on('actualizar-mensajes', async user=>{
+    socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.email));
+  })
+
+  socket.on('mis-mensajes', async (usuario, callback) => {
     console.log('regreso');
-    const msgs = await obtenerPacientesPorUsuario(user.email);
+    const msgs = await obtenerPacientesPorUsuario(usuario.email);
     callback(msgs);
     // socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.email));
   });

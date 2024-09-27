@@ -32,8 +32,6 @@ const MensajeRecibido = (req, res ) => {
       const messages = messageObject[0];
       const text = GetTextUser(messages);
       const number = messages['from'];
-      console.log('Mensaje: ',text);
-      console.log('Para: ',number);
       // myConsole.log(text);
       SendMessageWhatsApp(text, number);
     };

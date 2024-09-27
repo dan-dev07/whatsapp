@@ -20,6 +20,10 @@ const PacienteSchema = new Schema({
       type: String,
       required: true
     },
+    id:{
+      type: String,
+      required: true
+    }
   },
   ultimaComunicacion: {
     type: Date,
