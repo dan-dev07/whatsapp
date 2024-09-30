@@ -9,7 +9,7 @@ const agregarPaciente = async (datos) => {
 
     const chats = {fecha, mensaje, leido, emisor};
     const user = {nombre, email, id};
-
+    console.log(chats);
     const paciente = await Paciente({ nombrePaciente ,telefono, usuarioAsignado:user, ultimaComunicacion, chats:chats });
     await SinAsignar.findOneAndDelete({telefono, mensaje});
 

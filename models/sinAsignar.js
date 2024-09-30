@@ -13,7 +13,6 @@ const SinAsignarSchema = Schema({
   emisor:{
     type:String,
     required:false,
-    default:'Paciente',
   }
 });
 

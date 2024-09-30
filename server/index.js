@@ -62,15 +62,14 @@ app.post('/api/whatsapp', async (req, res = express.response) => {
         await agregarPendientes(text, newNumber);
         console.log('pendiente agregado');
         io.sockets.emit('mensajes-sinAsignar', await obtenerPendientes());
-        // io.sockets.emit('mis-mensajes', await obtenerPacientesPorUsuario(UsuarioActual.email));
-        // io.to(res.usuarioAsignado.id).emit('mis-mensajes', await obtenerPacientesPorUsuario(UsuarioActual.email));
       }else{
-        const ultimo = await GuardarMensajeRecibido(text, newNumber);
-        console.log('paciente actualizado');
-        // io.sockets.emit('mis-mensajes', await obtenerPacientesPorUsuario(UsuarioActual.email));
-        io.to(res.usuarioAsignado.id).emit('mis-mensajes', await obtenerPacientesPorUsuario(res.usuarioAsignado.email));
-        io.to(res.usuarioAsignado.id).emit('mensaje-recibido', {ultimo, telefono:newNumber });
-        // io.sockets.emit('mensaje-recibido', {ultimo, telefono:newNumber } );
+        const mensaje = await GuardarMensajeRecibido(text, newNumber);
+        console.log('paciente actualizado: ', mensaje);
+        const {ultimoMsg, id} = mensaje;
+        io.to(id).emit('mensaje-recibido', {ultimo:ultimoMsg, telefono:newNumber }, async (status) =>{
+          console.log(status);
+          // io.to(id).emit('mis-mensajes', await obtenerPacientesPorUsuario(res.usuarioAsignado.email));
+        });
         SendMessageWhatsApp(text);
       }
     };    
@@ -134,41 +133,35 @@ io.on('connection', async (socket) => {
 
   socket.join(user.id);
 
+  //enviar todos los mensajes sin asignar
   socket.emit('mensajes-sinAsignar', await obtenerPendientes());
+  
+  //enviar los mensajes asignados por usuario  
   socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.email));
 
-  socket.on('actualizar-mensajes', async user=>{
-    socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.email));
-  })
-
-  socket.on('mis-mensajes', async (usuario, callback) => {
-    console.log('regreso');
-    const msgs = await obtenerPacientesPorUsuario(usuario.email);
-    callback(msgs);
-    // socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.email));
-  });
-
+  //asignar a los pacientes a un usuario
   socket.on('paciente-asignado', async (data) => {
     await agregarPaciente(data);
     io.emit('mensajes-sinAsignar', await obtenerPendientes());
-    socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.email));
+    socket.to(data.id).emit('mis-mensajes', await obtenerPacientesPorUsuario(data.email));
   });
 
-  socket.on('conversacion-actual', async (telefono, callback) => {
-    const msgs = await obtenerConversacionActual(telefono, user.email);
+  //conversación actual
+  socket.on('conversacion-actual', async ({email, telefono, id}, callback) => {
+    const msgs = await obtenerConversacionActual(telefono, email);
     callback(msgs);
-    socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.email));
+    // socket.to(id).emit('mis-mensajes', await obtenerPacientesPorUsuario(email));
   });
 
   socket.on('mensaje-enviado', async (data, callback) => {
-    const { telefono, emisor, fecha, leido, mensaje } = data;
+    const { telefono, emisor, fecha, leido, mensaje, user } = data;
     const ultimo = await guardarMensajeEnviado(telefono, user.email, { emisor, fecha, leido, mensaje });
-    if (ultimo) {
+    if (typeof(ultimo) === 'object') {
       callback(ultimo);
       SendMessageWhatsApp(mensaje, telefono);
       socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.email));
     }else{
-      callback('no se pudo enviar el mensaje')
+      callback(ultimo);
     }
   });
 

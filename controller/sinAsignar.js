@@ -10,13 +10,14 @@ const obtenerPendientes = async () => {
       return [];
     };
     const ultimoMensajeArray = mensajes.map(m => {
-      const { mensaje, telefono, fecha, id } = m;
+      const { mensaje, telefono, fecha, id, emisor } = m;
       const ultimo = mensaje[mensaje.length - 1];
       return {
         telefono,
         mensaje: ultimo,
         fecha,
-        id
+        id, 
+        emisor
       }
     });
     return {
@@ -36,9 +37,11 @@ const agregarPendientes = async (mensaje, telefono) => {
     const fecha = dayjs().format('DD/MM/YYYY HH:mm a');
     // buscar en pendientes y actualizar
     const mensajePaciente = await SinAsignar.findOne({ telefono });
+    const emisor = 'Paciente';
     if (!mensajePaciente) {
       //guardar mensaje
-      const agregarMensaje = await SinAsignar.create({telefono, mensaje, fecha});
+      const agregarMensaje = await SinAsignar.create({telefono, mensaje, fecha, emisor});
+      // agregarMensaje.save();
       console.log('Pendiente guardado: ', agregarMensaje);
 
       return true;
