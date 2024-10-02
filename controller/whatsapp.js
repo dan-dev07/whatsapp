@@ -3,6 +3,7 @@ const https = require('https');
 const Paciente = require('../models/paciente');
 const dayjs = require('dayjs');
 const { response } = require('express');
+const axios = require('axios');
 // const myConsole = new console.Console(fs.createWriteStream('./logs.txt'));
 // const SocketSingleton = require('../models/socketSingleton');
 const VerifyToken = (req, res=response ) => {
@@ -47,7 +48,7 @@ const MensajeRecibido = (req, res ) => {
   };
 };
 
-const GetTextUser = (messages) => {
+const  GetTextUser = (messages) => {
   let text = '';
   let typeMessage = messages['type'];
   if (typeMessage === 'text') {
@@ -61,10 +62,14 @@ const GetTextUser = (messages) => {
     }else if (typeInteractive === 'list_reply') {
       text = interactiveObject['list_reply']['title'];
     }else{
-      myConsole.log('sin mensaje');
+      // myConsole.log('sin mensaje');
+      return null;
     };
+  }else if (typeMessage === 'image') {
+    text = 'se ha recibido un mensaje';
+    
   }else{
-    myConsole.log('sin mensaje');    
+    // myConsole.log('sin mensaje');    
   };
 
   return text;
@@ -82,6 +87,29 @@ const SendMessageWhatsApp = (textResponse, number='525531014209') => {
       "body": textResponse
     }
   });
+  const options = {
+    host:'graph.facebook.com',
+    path:'/v20.0/440395809154094/messages',
+    method:'POST',
+    body:data,
+    headers :{
+      "Content-type":"application/json",
+      Authorization: "Bearer EAAHjCGUicZC8BO2R7r7R3ZB9zLxrIKMxBBYHVHRsVsDL4JTRBmh1mrCNe4MHYoGGhDRueQg2OGEB8pP309QwfsQAuLxkCZCoFN3yE50m8DXKaN3GCSTrn1X8LtwKyWZAbkHP3eTVqKOWzH226HYSns2XOxnqMSUf6WtwZCdWCXN5ora4cYMO7LScKU2sGiwasrKSEo5yrNh2i9Irpc8ZC2ao7Dix0mxIce5fUvdAcZD"
+    }
+  };
+  const req = https.request(options, res=>{
+    res.on('data', d=>{
+      process.stdout.write(d);
+    });  
+  });
+  req.on('error', error =>{
+    console.error('error: ',error);
+  });
+  req.write(data);
+  req.end();
+};
+
+const SampleSendMessageWhatsApp = (data) => {
   const options = {
     host:'graph.facebook.com',
     path:'/v20.0/440395809154094/messages',
@@ -132,4 +160,5 @@ module.exports = {
   GetTextUser,
   SendMessageWhatsApp,
   GuardarMensajeRecibido,
+  SampleSendMessageWhatsApp
 }

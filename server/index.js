@@ -1,15 +1,14 @@
 //Servidor Express
 const express = require('express');
 const cors = require('cors');
-const dayjs = require('dayjs');
 const { dbConnection } = require('../database/config');
 const socketio = require('socket.io');
 const { comprobarJWT } = require('../helpers/jwt');
-const { obtenerPendientes, agregarPendientes, agregarNuevoPendiente, agregarNuevoMensajePendiente } = require('../controller/sinAsignar');
+const { obtenerPendientes, agregarPendientes } = require('../controller/sinAsignar');
 const { obtenerPacientesPorUsuario, agregarPaciente, obtenerConversacionActual, guardarMensajeEnviado, buscarNumeroExistente } = require('../controller/paciente');
 const { check } = require('express-validator');
-const SinAsignar = require('../models/sinAsignar');
-const { VerifyToken, GuardarMensajeRecibido, SendMessageWhatsApp, GetTextUser } = require('../controller/whatsapp');
+const { VerifyToken, GuardarMensajeRecibido, SendMessageWhatsApp, GetTextUser, SampleSendMessageWhatsApp } = require('../controller/whatsapp');
+const { SampleImage, SampleDocument } = require('../helpers/textTypes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -37,8 +36,11 @@ app.use(cors());
 app.use('/api/Login', require('../router/auth'));
 app.get('/api/whatsapp', VerifyToken);
 app.post('/api/whatsapp', async (req, res = express.response) => {
+
   try {
+    console.log("Incoming webhook message:", JSON.stringify(req.body, null, 2));
     const entry = req.body['entry'][0];
+    console.log('entry-image: ', entry);
     const changes = entry['changes'][0];
     const value = changes['value'];
     const messageObject = value['messages'];
@@ -48,31 +50,58 @@ app.post('/api/whatsapp', async (req, res = express.response) => {
       const number = messages['from'];
       console.log('Mensaje: ', text);
       console.log('Para: ', number);
-
       let newNumber = '';
       if (number.length === 13 && number.startsWith('521')) {
         newNumber = '52' + number.slice(3, 13);
       };
-
       console.log('numeroEnAsignar: ', newNumber);
       console.log(UsuarioActual);
 
       const res = await buscarNumeroExistente(newNumber);
       if (res.ok === false) {
+        
         await agregarPendientes(text, newNumber);
         console.log('pendiente agregado');
         io.sockets.emit('mensajes-sinAsignar', await obtenerPendientes());
-      }else{
+      } else {
         const mensaje = await GuardarMensajeRecibido(text, newNumber);
         console.log('paciente actualizado: ', mensaje);
-        const {ultimoMsg, id} = mensaje;
-        io.to(id).emit('mensaje-recibido', {ultimo:ultimoMsg, telefono:newNumber }, async (status) =>{
-          console.log(status);
-          // io.to(id).emit('mis-mensajes', await obtenerPacientesPorUsuario(res.usuarioAsignado.email));
-        });
+        const { ultimoMsg, id } = mensaje;
+        // io.to(id).emit('mensaje-recibido', {ultimo:ultimoMsg, telefono:newNumber});
+        io.to(id).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: newNumber });
+        io.to(id).emit('mis-mensajes', obtenerPacientesPorUsuario(res.usuarioAsignado.email))
         SendMessageWhatsApp(text);
       }
-    };    
+      // if (text === 'text') {
+      //   console.log('numeroEnAsignar: ', newNumber);
+      //   console.log(UsuarioActual);
+
+      //   const res = await buscarNumeroExistente(newNumber);
+      //   if (res.ok === false) {
+      //     await agregarPendientes(text, newNumber);
+      //     console.log('pendiente agregado');
+      //     io.sockets.emit('mensajes-sinAsignar', await obtenerPendientes());
+      //   }else{
+      //     const mensaje = await GuardarMensajeRecibido(text, newNumber);
+      //     console.log('paciente actualizado: ', mensaje);
+      //     const {ultimoMsg, id} = mensaje;
+      //     // io.to(id).emit('mensaje-recibido', {ultimo:ultimoMsg, telefono:newNumber});
+      //     io.to(id).emit('mensaje-recibido', {ultimo:ultimoMsg, telefono:newNumber},callabck=>{
+      //       console.log(callabck);
+      //     });
+      //     // io.to(id).emit('mis-mensajes', await obtenerPacientesPorUsuario(res.usuarioAsignado.email));
+      //     SendMessageWhatsApp(text);
+      //   }
+      // }else if (text === 'image') {
+      //   const data = SampleImage(newNumber);
+      //   SampleSendMessageWhatsApp(data);
+      // }else if (text === 'document') {
+      //   const data = SampleDocument(newNumber);
+      //   SampleSendMessageWhatsApp(data);
+      // };
+
+
+    };
     res.send('EVENT_RECEIVED');
   } catch (error) {
     console.log(error);
@@ -135,7 +164,7 @@ io.on('connection', async (socket) => {
 
   //enviar todos los mensajes sin asignar
   socket.emit('mensajes-sinAsignar', await obtenerPendientes());
-  
+
   //enviar los mensajes asignados por usuario  
   socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.email));
 
@@ -147,7 +176,7 @@ io.on('connection', async (socket) => {
   });
 
   //conversación actual
-  socket.on('conversacion-actual', async ({email, telefono, id}, callback) => {
+  socket.on('conversacion-actual', async ({ email, telefono, id }, callback) => {
     const msgs = await obtenerConversacionActual(telefono, email);
     callback(msgs);
     // socket.to(id).emit('mis-mensajes', await obtenerPacientesPorUsuario(email));
@@ -156,11 +185,11 @@ io.on('connection', async (socket) => {
   socket.on('mensaje-enviado', async (data, callback) => {
     const { telefono, emisor, fecha, leido, mensaje, user } = data;
     const ultimo = await guardarMensajeEnviado(telefono, user.email, { emisor, fecha, leido, mensaje });
-    if (typeof(ultimo) === 'object') {
+    if (typeof (ultimo) === 'object') {
       callback(ultimo);
       SendMessageWhatsApp(mensaje, telefono);
       socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.email));
-    }else{
+    } else {
       callback(ultimo);
     }
   });
