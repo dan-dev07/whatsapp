@@ -39,8 +39,8 @@ app.post('/api/whatsapp', async (req, res = express.response) => {
 
   try {
     console.log("Incoming webhook message:", JSON.stringify(req.body, null, 2));
+    console.log(req.body['entry-image']);
     const entry = req.body['entry'][0];
-    console.log('entry-image: ', entry);
     const changes = entry['changes'][0];
     const value = changes['value'];
     const messageObject = value['messages'];
