@@ -7,8 +7,9 @@ const { comprobarJWT } = require('../helpers/jwt');
 const { obtenerPendientes, agregarPendientes } = require('../controller/sinAsignar');
 const { obtenerPacientesPorUsuario, agregarPaciente, obtenerConversacionActual, guardarMensajeEnviado, buscarNumeroExistente } = require('../controller/paciente');
 const { check } = require('express-validator');
-const { VerifyToken, GuardarMensajeRecibido, SendMessageWhatsApp, GetTextUser, SampleSendMessageWhatsApp } = require('../controller/whatsapp');
+const { VerifyToken, GuardarMensajeRecibido, SendMessageWhatsApp, SendImageWhatsApp, SendPdfWhatsApp } = require('../controller/whatsapp');
 const { SampleImage, SampleDocument } = require('../helpers/textTypes');
+const { numeroTelefono, idImagen, idPdf } = require('../helpers/funciones');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,7 +27,6 @@ dbConnection();
 app.use(express.static(__dirname + '/public'));
 
 //middlWares
-let UsuarioActual = [];
 //Parseo de los datos que llegan desde postman - Parseo del body
 app.use(express.json());
 // CORS
@@ -38,74 +38,48 @@ app.get('/api/whatsapp', VerifyToken);
 app.post('/api/whatsapp', async (req, res = express.response) => {
 
   try {
-    console.log("Incoming webhook message:", JSON.stringify(req.body, null, 2));
-    console.log(req.body['entry-image']);
     const entry = req.body['entry'][0];
     const changes = entry['changes'][0];
     const value = changes['value'];
     const messageObject = value['messages'];
+
     if (typeof messageObject !== 'undefined') {
-      const messages = messageObject[0];
-      const text = GetTextUser(messages);
-      const number = messages['from'];
-      console.log('Mensaje: ', text);
-      console.log('Para: ', number);
-      let newNumber = '';
-      if (number.length === 13 && number.startsWith('521')) {
-        newNumber = '52' + number.slice(3, 13);
-      };
-      console.log('numeroEnAsignar: ', newNumber);
-      console.log(UsuarioActual);
+      const type = messageObject[0]['type'];
+      if (type === 'text') {
+        const messages = messageObject[0];
+        const text = messages['text']['body'];
+        const number = numeroTelefono(messages);
+        const res = await buscarNumeroExistente(number);
 
-      const res = await buscarNumeroExistente(newNumber);
-      if (res.ok === false) {
-        
-        await agregarPendientes(text, newNumber);
-        console.log('pendiente agregado');
-        io.sockets.emit('mensajes-sinAsignar', await obtenerPendientes());
-      } else {
-        const mensaje = await GuardarMensajeRecibido(text, newNumber);
-        console.log('paciente actualizado: ', mensaje);
-        const { ultimoMsg, id } = mensaje;
-        // io.to(id).emit('mensaje-recibido', {ultimo:ultimoMsg, telefono:newNumber});
-        io.to(id).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: newNumber });
-        io.to(id).emit('mis-mensajes', obtenerPacientesPorUsuario(res.usuarioAsignado.email))
-        SendMessageWhatsApp(text);
+        if (res.ok === false) {
+          await agregarPendientes(text, number);
+          io.sockets.emit('mensajes-sinAsignar', await obtenerPendientes());
+        } else {
+          const mensaje = await GuardarMensajeRecibido(text, number);
+          const {ultimoMsg, id} = mensaje;
+          io.to(id).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
+          io.to(id).emit('mis-mensajes', await obtenerPacientesPorUsuario(res.usuarioAsignado.email));
+          SendMessageWhatsApp(text);
+        }
       }
-      // if (text === 'text') {
-      //   console.log('numeroEnAsignar: ', newNumber);
-      //   console.log(UsuarioActual);
-
-      //   const res = await buscarNumeroExistente(newNumber);
-      //   if (res.ok === false) {
-      //     await agregarPendientes(text, newNumber);
-      //     console.log('pendiente agregado');
-      //     io.sockets.emit('mensajes-sinAsignar', await obtenerPendientes());
-      //   }else{
-      //     const mensaje = await GuardarMensajeRecibido(text, newNumber);
-      //     console.log('paciente actualizado: ', mensaje);
-      //     const {ultimoMsg, id} = mensaje;
-      //     // io.to(id).emit('mensaje-recibido', {ultimo:ultimoMsg, telefono:newNumber});
-      //     io.to(id).emit('mensaje-recibido', {ultimo:ultimoMsg, telefono:newNumber},callabck=>{
-      //       console.log(callabck);
-      //     });
-      //     // io.to(id).emit('mis-mensajes', await obtenerPacientesPorUsuario(res.usuarioAsignado.email));
-      //     SendMessageWhatsApp(text);
-      //   }
-      // }else if (text === 'image') {
-      //   const data = SampleImage(newNumber);
-      //   SampleSendMessageWhatsApp(data);
-      // }else if (text === 'document') {
-      //   const data = SampleDocument(newNumber);
-      //   SampleSendMessageWhatsApp(data);
-      // };
-
-
+      if (type === 'image') {
+        const messages = messageObject[0];
+        const number = numeroTelefono(messages);
+        const id = idImagen(messages);
+        const data = SampleImage(number);
+        SendImageWhatsApp(data, id);
+      }
+      if (type === 'document') {
+        const messages = messageObject[0];
+        const number = numeroTelefono(messages);
+        const id = idPdf(messages);
+        const data = SampleDocument(number);
+        SendPdfWhatsApp(data, id);
+      };
     };
     res.send('EVENT_RECEIVED');
   } catch (error) {
     console.log(error);
-    // myConsole.log(error);
     res.send('EVENT_RECEIVED');
   };
 })
@@ -149,37 +123,33 @@ app.post('/api/sinAsignar', [
     };
   });
 
-
 //io
 io.on('connection', async (socket) => {
-  // console.log(socket.handshake.query['auth']);
   const [valido, user] = comprobarJWT(socket.handshake.query['auth']);
   if (!valido) {
     console.log('socket no identificado');
     return socket.disconnect();
   };
   console.log('Nuevo cliente conectado:', user);
-
   socket.join(user.id);
 
   //enviar todos los mensajes sin asignar
   socket.emit('mensajes-sinAsignar', await obtenerPendientes());
 
-  //enviar los mensajes asignados por usuario  
+  //enviar los pacientes asignados 
   socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.email));
 
   //asignar a los pacientes a un usuario
-  socket.on('paciente-asignado', async (data) => {
-    await agregarPaciente(data);
+  socket.on('paciente-asignado', async (user) => {
+    await agregarPaciente(user);
     io.emit('mensajes-sinAsignar', await obtenerPendientes());
-    socket.to(data.id).emit('mis-mensajes', await obtenerPacientesPorUsuario(data.email));
+    socket.to(user.id).emit('mis-mensajes', await obtenerPacientesPorUsuario(user.email));
   });
 
   //conversación actual
   socket.on('conversacion-actual', async ({ email, telefono, id }, callback) => {
     const msgs = await obtenerConversacionActual(telefono, email);
     callback(msgs);
-    // socket.to(id).emit('mis-mensajes', await obtenerPacientesPorUsuario(email));
   });
 
   socket.on('mensaje-enviado', async (data, callback) => {
@@ -193,6 +163,8 @@ io.on('connection', async (socket) => {
       callback(ultimo);
     }
   });
+
+  
 
   socket.on('disconnect', () => {
     console.log('Cliente desconectado:', socket.id);

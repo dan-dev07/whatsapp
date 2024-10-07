@@ -1,4 +1,11 @@
-export const MensajeError =(error)=>{
-  console.log('Hubo un error: ', error);
-  return {error};
+const MensajeError =(msgError, error)=>{
+  console.log(msgError);
+  return {
+    msg: msgError,
+    error: error,
+  };
+};
+
+module.exports = {
+  MensajeError,
 }

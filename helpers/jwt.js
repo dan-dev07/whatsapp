@@ -4,7 +4,7 @@ const generarJWT = (usuario)=>{
   return new Promise ( (resolve, reject)=>{
     const {nombre, email, id} = usuario
     const payload = {nombre, email, id};
-    jwt.sign(payload, 'v$N6ste24-z0', {
+    jwt.sign(payload, process.env.JWT_KEY, {
       expiresIn:'24h'
     }, (err, token)=>{
       if (err) {
@@ -19,7 +19,7 @@ const generarJWT = (usuario)=>{
 
 const comprobarJWT = (token = '') => {
   try {
-    const {nombre, email, id} = jwt.verify(token, 'v$N6ste24-z0');
+    const {nombre, email, id} = jwt.verify(token, process.env.JWT_KEY);
     // return [true, id];
     return [true, {nombre, email, id}];
   } catch (error) {

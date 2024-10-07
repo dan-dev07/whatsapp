@@ -18,7 +18,8 @@ const SampleImage =(number)=>{
     "to": number,
     "type": "image",
     "image":{
-      "link": "https://lookaside.fbsbx.com/whatsapp_business/attachments/?mid=1030330835504260&ext=1727737929&hash=ATufqcBzQxaUUUqtH9AoPcFJI6vjmhw8Z8Lreff3O4pdoA"
+      // "link": "C:/Users/daniel.lopez/Desktop/Proyectos/prueba-sokets/backend/helper/imagenes/descargada.jpg",
+      "link": "https://biostoragecloud.blob.core.windows.net/resource-udemy-whatsapp-node/image_whatsapp.png"
     }
   });
   return data;
@@ -31,7 +32,7 @@ const SampleAudio =(number)=>{
     "to": number,
     "type": "audio",
     "audio": {
-      "link": "https://biostoragecloud.blob.core.windows.net/resource-udemy-whatsapp-node/audio_whatsapp.mp3"
+      "link": "https://lookaside.fbsbx.com/whatsapp_business/attachments/?mid=1071889021132057&ext=1727904615&hash=ATvdhLwF2ZtcZVTTVUnEB21cgb2UFLKaQtixGY2XvVlMlw"
     }
   });
   return data;
