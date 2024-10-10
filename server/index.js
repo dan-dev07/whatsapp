@@ -1,16 +1,15 @@
 //Servidor Express
 const express = require('express');
-const proxy = require('express-http-proxy');
 const cors = require('cors');
 const { dbConnection } = require('../database/config');
 const socketio = require('socket.io');
 const { comprobarJWT } = require('../helpers/jwt');
-const { obtenerPendientes, agregarPendientesTexto, agregarPendientesImagen, agregarPendientesPdf } = require('../controller/sinAsignar');
+const { obtenerPendientes, agregarPendiente } = require('../controller/sinAsignar');
 const { obtenerPacientesPorUsuario, agregarPaciente, obtenerConversacionActual, guardarMensajeEnviado, buscarNumeroExistente } = require('../controller/paciente');
 const { check } = require('express-validator');
-const { VerifyToken, GuardarMensajeRecibido, SendMessageWhatsApp, SendImageWhatsApp, SendPdfWhatsApp, GuardarMensajeRecibidoImagen, GuardarMensajeRecibidoPdf } = require('../controller/whatsapp');
+const { VerifyToken, GuardarMensajeRecibido, SendMessageWhatsApp, SendImageWhatsApp, SendPdfWhatsApp } = require('../controller/whatsapp');
 const { SampleImage, SampleDocument } = require('../helpers/textTypes');
-const { numeroTelefono, rutaImagen, rutaPdf } = require('../helpers/funciones');
+const { numeroTelefono, rutaDescarga } = require('../helpers/funciones');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -53,7 +52,7 @@ app.post('/api/whatsapp', async (req, res = express.response) => {
         const number = numeroTelefono(messages);
         const resExistente = await buscarNumeroExistente(number);
         if (resExistente.ok === false) {
-          const respPendientes = await agregarPendientesTexto(text, number, type);
+          const respPendientes = await agregarPendiente(text, number, type);
           if (!respPendientes.err) {
             io.sockets.emit('mensajes-sinAsignar', await obtenerPendientes());
           }
@@ -68,16 +67,17 @@ app.post('/api/whatsapp', async (req, res = express.response) => {
       if (type === 'image') {
         const messages = messageObject[0];
         const number = numeroTelefono(messages);
-        const urlImage = await rutaImagen(messages, number);
+        // const urlImage = await rutaImagen(messages, number);
+        const {ruta} = await rutaDescarga(messages, number, type);
         const resExistente = await buscarNumeroExistente(number);
         if (resExistente.ok === false) {
-          const respPendientes = await agregarPendientesImagen(number, type, urlImage);
+          const respPendientes = await agregarPendiente('Imagen Recibido', number, type, ruta);
           if (!respPendientes.error) {
             io.sockets.emit('mensajes-sinAsignar', await obtenerPendientes());
           }
         }
         else {
-          const mensaje = await GuardarMensajeRecibidoImagen(number, type, urlImage);
+          const mensaje = await GuardarMensajeRecibido('Imagen Recibido',number, type, ruta);
           const { ultimoMsg, id } = mensaje;
           io.to(id).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
           io.to(id).emit('mis-mensajes', await obtenerPacientesPorUsuario(resExistente.usuarioAsignado.email));
@@ -88,16 +88,16 @@ app.post('/api/whatsapp', async (req, res = express.response) => {
       if (type === 'document') {
         const messages = messageObject[0];
         const number = numeroTelefono(messages);
-        const { ruta, filename } = await rutaPdf(messages, number);
+        const { ruta, filename } = await rutaDescarga(messages, number, type);
         const resExistente = await buscarNumeroExistente(number);
         if (resExistente.ok === false) {
-          const respPendientes = await agregarPendientesPdf(number, type, ruta, filename);
+          const respPendientes = await agregarPendiente('Documento Recibido',number, type, ruta, filename);
           if (!respPendientes.err) {
             io.sockets.emit('mensajes-sinAsignar', await obtenerPendientes());
           }
         }
         else {
-          const mensaje = await GuardarMensajeRecibidoPdf(number, type, ruta, filename);
+          const mensaje = await GuardarMensajeRecibido('Documento Recibido',number, type, ruta, filename);
           const { ultimoMsg, id } = mensaje;
           io.to(id).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
           io.to(id).emit('mis-mensajes', await obtenerPacientesPorUsuario(resExistente.usuarioAsignado.email));

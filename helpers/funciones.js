@@ -1,7 +1,5 @@
-const { uploadBlobImagen, uploadBlobPdf } = require("./cargarArchivo");
-const { downloadBlobImagen } = require("./descargarArchivo");
-const { obtenerUrlImagen, guardarImagen } = require("./obtenerImagen");
-const { obtenerUrlPdf, guardarPdf } = require("./obtenerPdf");
+const axios = require('axios');
+const { obtenerDescarga, guardarArchivo } = require("./obtenerArchivo");
 
 const numeroTelefono = (messages) => {
   let newNumber = '';
@@ -12,65 +10,47 @@ const numeroTelefono = (messages) => {
   return newNumber;
 };
 
-const idImagen = (messages) => {
-  const idArchivo = messages['image']['id'];
-  const mimeType = messages['image']['mime_type'];
-  return {
-    idArchivo,
-    mimeType
+const fetchApi = (url, responseType) => {
+  try {
+    const instance = axios({
+      method: 'GET',
+      url,
+      responseType,
+      headers: {
+        'Authorization': `Bearer ${process.env.WHATSAPP_API_KEY}`
+      }
+    });
+    return instance;
+  } catch (err) {
+    MensajeError(`${baseURL} --- ${err}`, err);
   };
 };
 
-const idPdf = (messages) => {
-  const idArchivo = messages['document']['id'];
-  const mimeType = messages['document']['mime_type'];
-  const filename = messages['document']['filename'];
-  return {
-    idArchivo,
-    mimeType,
-    filename,
-  };
-};
+const rutaDescarga = async(messages, telefono, tipo)=>{
+  let id;
+  let filename;
+  if (tipo === 'image'){
+    id = messages['image']['id'];
+  }else if (tipo === 'document') {
+    id = messages['document']['id'];
+    filename = messages['document']['filename'];
+  }
 
-const rutaImagen = async (messages, telefono)=>{
-  const id = messages['image']['id'];
   //obtener id de imagen y guardarlo
-  const resImagen = await obtenerUrlImagen(id);
-  const docRespuesta = await guardarImagen(resImagen, id);
-  console.log(docRespuesta);
-  if (docRespuesta !== true) {
+  const descarga = await obtenerDescarga(id);
+  const ruta = await guardarArchivo(descarga, telefono, id, tipo);
+  console.log('docRuta: ', ruta);
+  if (ruta.error) {
     return;
   };
-
-  const ruta = await uploadBlobImagen(id, telefono);
-  console.log(ruta);
-  return ruta;
-};
-
-const rutaPdf = async (messages, telefono)=>{
-  const id = messages['document']['id'];
-  const filename = messages['document']['filename'];
-  //obtener id de imagen y guardarlo
-  const resImagen = await obtenerUrlPdf(id);
-  const docRespuesta = await guardarPdf(resImagen, id);
-  if (docRespuesta !== true) {
-    return ;
-  };
-
-  const ruta = await uploadBlobPdf(id, telefono);
-  console.log(ruta);
   return {
     ruta,
-    filename,
-  };
+    filename
+  }
 }
-
-
 
 module.exports = {
   numeroTelefono,
-  idImagen,
-  idPdf,
-  rutaImagen,
-  rutaPdf,
+  rutaDescarga,
+  fetchApi,
 }

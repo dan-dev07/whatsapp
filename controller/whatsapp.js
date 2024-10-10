@@ -1,15 +1,9 @@
 const { response } = require('express');
-const fs = require('fs');
-const path = require('path');
 const https = require('https');
 require('dotenv').config();
 const dayjs = require('dayjs');
 const Paciente = require('../models/paciente');
-const { obtenerImagen, obtenerUrlImagen, guardarImagen } = require('../helpers/obtenerImagen');
-const { obtenerPdf, guardarPdf, obtenerUrlPdf } = require('../helpers/obtenerPdf');
 const { MensajeError } = require('../helpers/error');
-const { uploadBlobImagen, uploadBlobPdf } = require('../helpers/cargarArchivo');
-const { downloadBlobImagen, downloadBlobPdf } = require('../helpers/descargarArchivo');
 
 const VerifyToken = (req, res = response) => {
   try {
@@ -63,18 +57,6 @@ const SendMessageWhatsApp = (textResponse, number = '525531014209') => {
 };
 
 const SendImageWhatsApp = async (data, infoDoc, telefono) => {
-  //obtener id de imagen y guardarlo
-  // const resImagen = await obtenerUrlImagen(infoDoc.idArchivo);
-  // const docRespuesta = await guardarImagen(resImagen, infoDoc.idArchivo);
-  // console.log(docRespuesta);
-  // if (docRespuesta !== true) {
-  //   return;
-  // };
-  // await uploadBlobImagen(infoDoc.idArchivo, telefono, resImagen)
-  //   .catch((err) => console.error('Error subiendo el blob:', err.message));
-
-  // await downloadBlobImagen(infoDoc.idArchivo, telefono)
-  //   .catch((err) => console.error('Error descargando el blob:', err.message));
 
   //guardar información para el envio de datos a facebook
   const options = {
@@ -102,19 +84,6 @@ const SendImageWhatsApp = async (data, infoDoc, telefono) => {
 };
 
 const SendPdfWhatsApp = async (data, infoDoc, telefono) => {
-  //obtener id de pdf y guardarlo
-  // const resPdf = await obtenerUrlPdf(infoDoc.idArchivo);
-  // const docRespuesta = await guardarPdf(resPdf, infoDoc.idArchivo);
-  // console.log(docRespuesta);
-  // if (docRespuesta !== true) {
-  //   return;
-  // };
-
-  // await uploadBlobPdf(infoDoc.idArchivo, telefono)
-  //   .catch((err) => console.error('Error subiendo el blob:', err.message));
-
-  // await downloadBlobPdf(infoDoc.idArchivo, telefono)
-  //   .catch((err) => console.error('Error descargando el blob:', err.message));
 
   //guardar información para el envio de datos a facebook
   const options = {
@@ -172,53 +141,7 @@ const SampleSendMessageWhatsApp = async (data, id = '1071889021132057') => {
   req.end();
 };
 
-const GuardarMensajeRecibido = async (texto, telefono, tipo) => {
-  try {
-    const mensaje = {
-      fecha: dayjs().format('DD/MM/YYYY HH:mm a'),
-      mensaje: texto,
-      leido: false,
-      emisor: 'Paciente',
-      tipo,
-    };
-    const paciente = await Paciente.findOneAndUpdate(
-      { telefono },
-      { $push: { chats: mensaje } },
-      { new: true });
-
-    const ultimoMsg = paciente.chats[paciente.chats.length - 1];
-    const { id } = paciente.usuarioAsignado;
-    return { ultimoMsg, id };
-  } catch (error) {
-    console.log(error);
-    return MensajeError('No se pudo guardar el mensaje', error);
-  };
-};
-
-const GuardarMensajeRecibidoImagen = async (telefono, tipo, urlDocumento) => {
-  try {
-    const mensaje = {
-      fecha: dayjs().format('DD/MM/YYYY HH:mm a'),
-      emisor: 'Paciente',
-      tipo,
-      urlDocumento,
-      mensaje: 'Imagen recibido',
-      leido: false,
-    };
-    const paciente = await Paciente.findOneAndUpdate(
-      { telefono },
-      { $push: { chats: mensaje } },
-      { new: true });
-
-    const ultimoMsg = paciente.chats[paciente.chats.length - 1];
-    const { id } = paciente.usuarioAsignado;
-    return { ultimoMsg, id };
-  } catch (error) {
-    return MensajeError('No se pudo guardar el mensaje', error);
-  };
-};
-
-const GuardarMensajeRecibidoPdf = async (telefono, tipo, urlDocumento, filename) => {
+const GuardarMensajeRecibido = async (texto, telefono, tipo,urlDocumento, filename) => {
   try {
     const mensaje = {
       fecha: dayjs().format('DD/MM/YYYY HH:mm a'),
@@ -226,7 +149,7 @@ const GuardarMensajeRecibidoPdf = async (telefono, tipo, urlDocumento, filename)
       tipo,
       filename,
       urlDocumento,
-      mensaje: 'Pdf recibido',
+      mensaje: texto,
       leido: false,
     };
     const paciente = await Paciente.findOneAndUpdate(
@@ -242,12 +165,11 @@ const GuardarMensajeRecibidoPdf = async (telefono, tipo, urlDocumento, filename)
   };
 };
 
+
 module.exports = {
   VerifyToken,
   SendMessageWhatsApp,
   GuardarMensajeRecibido,
-  GuardarMensajeRecibidoImagen,
-  GuardarMensajeRecibidoPdf,
   SampleSendMessageWhatsApp,
   SendImageWhatsApp,
   SendPdfWhatsApp,
