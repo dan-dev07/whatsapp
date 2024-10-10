@@ -1,23 +1,25 @@
-const Paciente = require('../models/paciente');
+const { MensajeError } = require('../helpers/error');
 const SinAsignar = require('../models/sinAsignar');
 const dayjs = require('dayjs');
 
 const obtenerPendientes = async () => {
   try {
-    const mensajes = await SinAsignar.find();
+    const pendientes = await SinAsignar.find();
     // console.log('obtenerPendientes: ', mensajes)
-    if (mensajes.length === 0) {
+    if (!pendientes) {
       return [];
     };
-    const ultimoMensajeArray = mensajes.map(m => {
-      const { mensaje, telefono, fecha, id, emisor } = m;
-      const ultimo = mensaje[mensaje.length - 1];
+    const ultimoMensajeArray = pendientes.map(m => {
+      const { mensajes, telefono } = m;
+      const ultimo = mensajes[mensajes.length - 1];
       return {
         telefono,
-        mensaje: ultimo,
-        fecha,
-        id, 
-        emisor
+        mensaje: ultimo.mensaje,
+        fecha: ultimo.fecha,
+        id: ultimo.id,
+        emisor: ultimo.emisor,
+        tipo: ultimo.tipo,
+        idArchivo: ultimo.idArchivo,
       }
     });
     return {
@@ -27,124 +29,101 @@ const obtenerPendientes = async () => {
   } catch (error) {
     console.log(error);
     return {
-      response: 'No se obtuvieron los datos correctamente'
+      err: 'No se obtuvieron los datos correctamente'
     };
   }
 };
 
-const agregarPendientes = async (mensaje, telefono) => {
+//para un mensaje de texto 
+const agregarPendientesTexto = async (mensaje, telefono, tipo) => {
   try {
-    const fecha = dayjs().format('DD/MM/YYYY HH:mm a');
     // buscar en pendientes y actualizar
     const mensajePaciente = await SinAsignar.findOne({ telefono });
     const emisor = 'Paciente';
+    const fecha = dayjs().format('DD/MM/YYYY HH:mm a');
+    const mensajes = { fecha, emisor, tipo, mensaje };
     if (!mensajePaciente) {
       //guardar mensaje
-      const agregarMensaje = await SinAsignar.create({telefono, mensaje, fecha, emisor});
-      // agregarMensaje.save();
+      const agregarMensaje = await SinAsignar.create({ telefono, mensajes });
       console.log('Pendiente guardado: ', agregarMensaje);
-
       return true;
-
-    }else if(mensajePaciente){
-      const res = await SinAsignar.findOneAndUpdate({ telefono },
-        { $push: { mensaje: mensaje }, fecha },
-        { new: true }
-      );
-      console.log('Pendiente actualizado');
-      return true;
-    }else{
-      return false;
     }
+    const res = await SinAsignar.findOneAndUpdate({ telefono },
+      { $push: { mensajes } },
+      { new: true }
+    );
+    console.log(mensajes);
+    console.log('Pendiente actualizado');
+    return true;
   } catch (error) {
     console.log(error);
-    return 'No se guardó el mensaje';
+    return {
+      err: 'No se guardó el mensaje'
+    }
   };
 };
 
-// const agregarPendientes = async (mensaje, telefono) => {
-//   try {
-//     const fecha = dayjs().format('DD/MM/YYYY HH:mm a');
-
-//     //buscar en pendientes 
-
-//     //guardar mensaje
-//     const agregarMensaje = await SinAsignar({ telefono, mensaje, fecha });
-//     agregarMensaje.save();
-//     console.log('Mensaje enviado');
-//     return ({
-//       mensaje: agregarMensaje
-//     });
-//   } catch (error) {
-//     console.log(error)
-//     return ({
-//       mensaje: 'No se pudo guardar el mensaje'
-//     });
-//   };
-// };
-
-const agregarNuevoPendiente = async (mensaje, telefono) => {
+//para recibir una imagen
+const agregarPendientesImagen = async (telefono, tipo, urlDocumento) => {
   try {
-    const fecha = dayjs().format('DD/MM/YYYY HH:mm a');
-
-    //guardar mensaje
-    const agregarMensaje = await SinAsignar({ telefono, mensaje, fecha });
-    agregarMensaje.save();
-    console.log('Mensaje enviado: NuevoPendiente');
-    return ({
-      mensaje: agregarMensaje
-    });
-  } catch (error) {
-    console.log(error)
-    return ({
-      mensaje: 'No se pudo guardar el mensaje'
-    });
-  };
-}
-
-const agregarNuevoMensajePendiente = async (mensaje, telefono) => {
-  try {
-    const fecha = dayjs().format('DD/MM/YYYY HH:mm a');
     // buscar en pendientes y actualizar
+    const mensajePaciente = await SinAsignar.findOne({ telefono });
+    const emisor = 'Paciente';
+    const fecha = dayjs().format('DD/MM/YYYY HH:mm a');
+    const mensajes = { fecha, emisor, tipo, urlDocumento ,mensaje:'Imagen recibido'};
+    if (!mensajePaciente) {
+      //guardar mensaje
+      const agregarMensaje = await SinAsignar.create({ telefono, mensajes });
+      console.log('Pendiente guardado: ', agregarMensaje);
+      return true;
+    }
     const res = await SinAsignar.findOneAndUpdate({ telefono },
-      { $push: { mensaje: mensaje }, fecha },
+      { $push: { mensajes } },
       { new: true }
     );
-    console.log('Mensaje enviado: agregarNuevoMensajePendiente')
-    return ({
-      mensaje: res
-    });
+    console.log('Pendiente actualizado');
+    return true;
   } catch (error) {
-    console.log(error)
-    return ({
-      mensaje: 'No se pudo guardar el mensaje'
-    });
+    console.log(error);
+    return MensajeError('No se guardó el mensaje', error);
   };
-}
+};
+
+//para recibir un archivo pdf
+const agregarPendientesPdf = async (telefono, tipo, urlDocumento, filename) => {
+  try {
+    // buscar en pendientes y actualizar
+    const mensajePaciente = await SinAsignar.findOne({ telefono });
+    const emisor = 'Paciente';
+    const fecha = dayjs().format('DD/MM/YYYY HH:mm a');
+    const mensajes = { fecha, emisor, tipo, urlDocumento, filename, mensaje:'Pdf recibido'};
+    if (!mensajePaciente) {
+      //guardar mensaje
+      const agregarMensaje = await SinAsignar.create({ telefono, mensajes });
+      console.log('Pendiente guardado: ', agregarMensaje);
+      return true;
+    }
+    const res = await SinAsignar.findOneAndUpdate({ telefono },
+      { $push: { mensajes } },
+      { new: true }
+    );
+    console.log(mensajes);
+    console.log('Pendiente actualizado');
+    return true;
+  } catch (error) {
+    console.log(error);
+    return MensajeError('No se guardó el mensaje', error);
+  };
+};
+
+const guardarImagenPendiente =()=>{
+
+};
+
 module.exports = {
   obtenerPendientes,
-  agregarPendientes,
-  agregarNuevoMensajePendiente,
-  agregarNuevoPendiente,
-}
-
-// const agregarPendientes = async(mensaje, telefono) => {
-//   try {
-//     const fecha = dayjs().format('DD/MM/YYYY HH:mm a');
-
-//     //buscar en pendientes
-
-//     //guardar mensaje
-//     const agregarMensaje = await SinAsignar({telefono, mensaje, fecha});
-//     agregarMensaje.save();
-//     console.log('Mensaje enviado');
-//     return ({
-//       mensaje: agregarMensaje
-//     });
-//   } catch (error) {
-//     console.log(error)
-//     return ({
-//       mensaje: 'No se pudo guardar el mensaje'
-//     });
-//   };
-// };
+  agregarPendientesTexto,
+  agregarPendientesImagen,
+  agregarPendientesPdf,
+  guardarImagenPendiente,
+};

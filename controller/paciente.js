@@ -1,25 +1,23 @@
 const Paciente = require('../models/paciente');
-// const sinAsignar = require('../models/sinAsignar');
 const SinAsignar = require('../models/sinAsignar');
 const { v4: uuidv4 } = require('uuid');
 
 const agregarPaciente = async (datos) => {
   try {
-    const { nombrePaciente = 'Pruebas', telefono, mensaje, fecha, emisor, nombre, email, id, ultimaComunicacion,  leido} = datos;
+    const { nombrePaciente = 'Pruebas', telefono, nombre, email, id, ultimaComunicacion } = datos;
 
-    const chats = {fecha, mensaje, leido, emisor};
     const user = {nombre, email, id};
-    console.log(chats);
-    const paciente = await Paciente({ nombrePaciente ,telefono, usuarioAsignado:user, ultimaComunicacion, chats:chats });
-    await SinAsignar.findOneAndDelete({telefono, mensaje});
-
-    paciente.save();
+    const pendiente = await SinAsignar.findOne({telefono});
+    const chats = pendiente.mensajes;
+    const paciente = await Paciente.create({ nombrePaciente ,telefono, usuarioAsignado:user, ultimaComunicacion, chats:chats });
+    await SinAsignar.findOneAndDelete({telefono});
+    
     return ({
       paciente
     });
   } catch (error) {
     console.log(error)
-    return 'No se pudo guardar el paciente';
+    return {err:'No se pudo guardar el paciente'};
   };
 };
 
@@ -28,13 +26,13 @@ const obtenerPacientesPorUsuario = async (email) => {
     const pacientesPorUsuario = (await Paciente.find({'usuarioAsignado.email':email})).map(p =>{
       const {nombrePaciente, telefono, chats, id} = p;
       const ultimoMsg = chats[chats.length - 1];
-      const {fecha, mensaje, leido} = ultimoMsg;
+      const {fecha, mensaje, leido } = ultimoMsg;
       return {nombrePaciente, telefono, id, fecha, mensaje, leido};
     });
     return pacientesPorUsuario.sort((a, b) => a.leido - b.leido );
   } catch (error) {
     console.log(error)
-    return 'No se pudo obtener a los pacientes para el usuario';
+    return {err:'No se pudo obtener a los pacientes para el usuario'}
   };
 };
 
@@ -48,7 +46,7 @@ const guardarMensajeEnviado =async (telefono,email, mensaje)=>{
     return ultimo;
   } catch (error) {
     console.log(error);
-    return 'No se pudo guardar el mensaje';
+    return {err:'No se pudo obtener guardar el mensaje'};
   }
 }
 
@@ -65,10 +63,11 @@ const obtenerConversacionActual =async (telefono, email)=>{
     });
     const pacienteActualizado = await Paciente.findOneAndUpdate({telefono, 'usuarioAsignado.email': email}, {chats:mensajesLeidos}, {new:true});
     const {chats:chatsAct} = pacienteActualizado;
+    
     return chatsAct;
   } catch (error) {
     console.log(error);
-    return 'No se pudo cargar las conversaciones';
+    return {err:'No se pudo cargar las conversaciones'};
   }
 }
 
@@ -84,7 +83,8 @@ const buscarNumeroExistente = async (telefono) => {
     ok:true,
     usuarioAsignado: numeroExistente.usuarioAsignado,
   };
-}
+};
+
 module.exports = {
   agregarPaciente,
   obtenerPacientesPorUsuario,

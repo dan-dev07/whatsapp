@@ -31,37 +31,41 @@ const PacienteSchema = new Schema({
   },
   chats:
     [{
-      fecha: {
-        type: String,
-        required: false,
+      fecha:{
+        type:String,
+        required:true
       },
-      mensaje: {
-        type: String,
-        required: false,
+      emisor:{
+        type:String,
+        required:true,
       },
-      leido: {
-        type: Boolean,
-        required: false,
-        default: false,
+      tipo:{
+        type:String,
+        required:true
       },
-      emisor: {
-        type: String,
-        required: false,
+      urlDocumento:{
+        type:String,
+        required:false,
+      },
+      filename:{
+        type:String,
+        required:false
+      },
+      mensaje:{
+        type:String,
+        required:false,
+        trim:true
+      },
+      leido:{
+        type:String,
+        required:false
       }
-    }],
-  fecha: {
-    type: String,
-    required: false,
-  },
-  mensaje: {
-    type: String,
-    required: false,
-  },
+    }]
 });
 
 PacienteSchema.method('toJSON', function () {
   const { __v, _id, ...object } = this.toObject();
-  object.id = _id;
+  // object.id = _id;
   return object;
 });
 module.exports = model('Paciente', PacienteSchema); 

@@ -38,7 +38,6 @@ const obtenerImagen = async (outputPath, res) => {
 
     // Pipe el stream de respuesta al stream de escritura
     res.data.pipe(writer);
-
     // Devuelve una promesa que se resuelve cuando el archivo se ha escrito completamente
     await new Promise((resolve, reject) => {
       writer.on('finish', resolve);
@@ -46,8 +45,8 @@ const obtenerImagen = async (outputPath, res) => {
     });
     return true;
   } catch (error) {
-    MensajeError('Error al escribir imagen en el buffer local', error);
-    return false;
+    
+    return MensajeError('Error al escribir imagen en el buffer local', error);
   };
 };
 
@@ -58,12 +57,11 @@ const guardarImagen = async (res, id) => {
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
   
   const resp = await obtenerImagen(outputPath, res);
-  if (resp) {
+  if (resp === true) {
     ok = true;
     console.log('Imagen descargada y guardada con éxito.');
   } else {
     ok = false;
-    MensajeError('Error al guardar imagen', {});
   };
   return ok;
 };

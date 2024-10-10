@@ -23,6 +23,6 @@ router.post('/',[
 ] ,ingresar);
 
 router.post('/Refresh',
-  check('token', 'El token es obligatorio').not().isEmpty()
-  ,nuevoToken);
+  check('token', 'El token es obligatorio').not().isEmpty(),
+  nuevoToken);
 module.exports = router;

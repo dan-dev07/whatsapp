@@ -46,8 +46,8 @@ async function obtenerPdf(outputPath, res) {
     });
     return true;
   } catch (error) {
-    MensajeError('Error al escribir el pdf en el buffer local', error);
-    return false;
+    return MensajeError('Error al escribir el pdf en el buffer local', error);
+    
   };
 };
 
@@ -58,12 +58,11 @@ const guardarPdf = async (res, id) => {
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
   
   const resp = await obtenerPdf(outputPath, res)
-  if (resp) {
+  if (resp === true) {
     ok = true;
     console.log('PDF descargado y guardado con éxito.');
   } else {
     ok = false;
-    MensajeError('Error al guardar pdf', error);
   };
   return ok;
 }

@@ -1,4 +1,4 @@
-const { BlobServiceClient } = require('@azure/storage-blob');
+const { BlobServiceClient, StorageSharedKeyCredential, newPipeline } = require('@azure/storage-blob');
 const fs = require('fs');
 const path = require('path');
 const stream = require('stream');
@@ -10,78 +10,88 @@ const AZURE_STORAGE_CONNECTION_STRING = process.env.AZURE_CONNECTION_STRING;
 // Nombre del contenedor y del blob
 const containerName = 'data';
 
-async function uploadBlobImagen(id) {
-  const blobName = `devalmacena`;
-  // Crear un cliente de servicio de blob
-  const blobServiceClient = BlobServiceClient.fromConnectionString(AZURE_STORAGE_CONNECTION_STRING);
+async function uploadBlobImagen(id, telefono) {
 
-  // Obtener un cliente de contenedor
-  const containerClient = blobServiceClient.getContainerClient(containerName);
-
-  // Crear el contenedor si no existe
-  await containerClient.createIfNotExists();
-
-  // Obtener un cliente de blob
-  const blockBlobClient = containerClient.getBlockBlobClient(blobName);
-
-  // Verificar si el archivo existe
-  const origen = path.join(__dirname, 'imagenes');
-  const imagenRuta = `${origen}/${id}.jpg`;
-  if (!fs.existsSync(imagenRuta)) {
-    MensajeError('El archivo no existe', imagenRuta);
-    return; // Salir si el archivo no existe
-  };
-  // Leer la imagen y almacenarla en un buffer
-  const buffer = fs.readFileSync(imagenRuta);
-  console.log('Imagen leída correctamente');
-
-  // Convertir el buffer en un stream
-  const bufferStream = new stream.PassThrough();
-  bufferStream.end(buffer); // Termina el stream con el buffer
-
-  // Subir el blob
-  await blockBlobClient.uploadStream(bufferStream, {
-    blobHTTPHeaders: { blobContentType: 'image/jpg' } // Ajusta según el tipo de archivo
-  });
-  console.log(`El archivo se ha subido a ${blobName} en el contenedor ${containerName}`);
-  fs.unlinkSync(imagenRuta);
+  try {
+    const blobName = `${telefono}/${id}.jpg`;
+    // Crear un cliente de servicio de blob
+    const blobServiceClient = BlobServiceClient.fromConnectionString(AZURE_STORAGE_CONNECTION_STRING);
+  
+    // Obtener un cliente de contenedor
+    const containerClient = blobServiceClient.getContainerClient(containerName);
+  
+    // Crear el contenedor si no existe
+    await containerClient.createIfNotExists();
+  
+    // Obtener un cliente de blob
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+  
+    // Verificar si el archivo existe
+    const origen = path.join(__dirname, 'imagenes');
+    const imagenRuta = `${origen}/${id}.jpg`;
+    if (!fs.existsSync(imagenRuta)) {
+      MensajeError('El archivo no existe', imagenRuta);
+      return; // Salir si el archivo no existe
+    };
+    // Leer la imagen y almacenarla en un buffer
+    const buffer = fs.readFileSync(imagenRuta);
+  
+    console.log('Imagen leída correctamente');
+  
+    // Subir el blob
+    await blockBlobClient.upload(buffer, buffer.length,{
+      blobHTTPHeaders: { blobContentType: 'image/jpg' }, // Ajusta según el tipo de archivo
+      onProgress: (progress) => console.log(progress),
+    });
+    console.log(`El archivo se ha subido a ${blobName} en el contenedor ${containerName}`);
+    fs.unlinkSync(imagenRuta);
+    return blobName;
+    
+  } catch (error) {
+    return MensajeError('Error al descargar el blob:', error);
+  }
 };
 
-async function uploadBlobPdf(id) {
-  const blobName = `devalmacena`;
-  // Crear un cliente de servicio de blob
-  const blobServiceClient = BlobServiceClient.fromConnectionString(AZURE_STORAGE_CONNECTION_STRING);
+async function uploadBlobPdf(id, telefono) {
 
-  // Obtener un cliente de contenedor
-  const containerClient = blobServiceClient.getContainerClient(containerName);
+  try {
+    
+    const blobName = `${telefono}/${id}.pdf`;
+    // Crear un cliente de servicio de blob
+    const blobServiceClient = BlobServiceClient.fromConnectionString(AZURE_STORAGE_CONNECTION_STRING);
 
-  // Crear el contenedor si no existe
-  await containerClient.createIfNotExists();
+    // Obtener un cliente de contenedor
+    const containerClient = blobServiceClient.getContainerClient(containerName);
 
-  // Obtener un cliente de blob
-  const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+    // Crear el contenedor si no existe
+    await containerClient.createIfNotExists();
 
-  // Verificar si el archivo existe
-  const origen = path.join(__dirname, 'pdf');
-  const pdfRuta = `${origen}/${id}.pdf`;
-  if (!fs.existsSync(pdfRuta)) {
-    MensajeError('El archivo no existe', pdfRuta);
-    return; // Salir si el archivo no existe
-  };
-  // Leer la imagen y almacenarla en un buffer
-  const buffer = fs.readFileSync(pdfRuta);
-  console.log('Pdf leído correctamente');
+    // Obtener un cliente de blob
+    const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
-  // Convertir el buffer en un stream
-  const bufferStream = new stream.PassThrough();
-  bufferStream.end(buffer); // Termina el stream con el buffer
+    // Verificar si el archivo existe
+    const origen = path.join(__dirname, 'pdf');
+    const pdfRuta = `${origen}/${id}.pdf`;
+    if (!fs.existsSync(pdfRuta)) {
+      MensajeError('El archivo no existe', pdfRuta);
+      return; // Salir si el archivo no existe
+    };
+    // Leer el pdf y almacenarla en un buffer
+    const buffer = fs.readFileSync(pdfRuta);
+    console.log('Pdf leído correctamente');
 
-  // Subir el blob
-  await blockBlobClient.uploadStream(bufferStream, {
-    blobHTTPHeaders: { blobContentType: 'application/pdf' } // Ajusta según el tipo de archivo
-  });
-  console.log(`El archivo se ha subido a ${blobName} en el contenedor ${containerName}`);
-  fs.unlinkSync(pdfRuta);
+    // Subir el blob
+    await blockBlobClient.upload(buffer, buffer.length, {
+      blobHTTPHeaders: { blobContentType: 'application/pdf' }, // Ajusta según el tipo de archivo
+      onProgress: (progress) => console.log(progress),
+    });
+    console.log(`El archivo se ha subido a ${blobName} en el contenedor ${containerName}`);
+    // fs.unlinkSync(pdfRuta);
+    return blobName;
+  } catch (error) {
+    return MensajeError('Error al descargar el blob:', error);
+  }
+
 };
 
 module.exports = {
