@@ -1,0 +1,105 @@
+const express = require("express");
+const fs = require('fs');
+const multer = require('multer');
+const path = require('path');
+const { descargarArchivo } = require("../helpers/manejoArchivosPacientes/azureDb");
+const { cargarArchivo } = require("../helpers/manejoArchivosEscotel/azureDb");
+const { SetFileWhatsApp, SendImageWhatsApp, SendDocumentWhatsApp } = require("./whatsapp");
+const FormData = require('form-data');
+const { SampleImage, SampleDocument } = require("../helpers/textTypes");
+const { guardarArchivoEnviado } = require("./paciente");
+
+
+const entregarArchivoBuffer = async (req, res = express.response) => {
+  try {
+    const { urlDocumento, tipo, telefono } = req.body;
+
+    if (tipo === 'image' || tipo === 'document') {
+      const bufferStream = await descargarArchivo(urlDocumento);
+      if (bufferStream) {
+        // Almacenar los datos en un buffer
+        const chunks = [];
+        bufferStream.on('data', (chunk) => {
+          chunks.push(chunk);
+        });
+
+        bufferStream.on('end', () => {
+          const buffer = Buffer.concat(chunks);
+          const base64 = buffer.toString('base64');
+          if (tipo === 'image') {
+            const dataUrl = `data:image/jpeg;base64,${base64}`; // Cambia 'image/jpeg' si es necesario
+            res.json({ image: dataUrl });
+          };
+          if (tipo === 'document') {
+            const dataUrl = `${base64}`; // Tipo MIME para PDF
+            res.json({ document: dataUrl });
+          }
+        });
+
+        bufferStream.on('error', (error) => {
+          console.error('Error processing stream:', error);
+          res.status(500).send('Error processing image stream');
+        });
+      };
+    };
+
+  } catch (error) {
+    res.status(500).json({
+      response: 'Hubo un error al regresar la descarga'
+    });
+  }
+};
+
+// Configura multer para guardar archivos
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'controller/uploads'); // Asegúrate de que esta carpeta exista
+  },
+  filename: (req, file, cb) => {
+    cb(null, file.originalname);
+  },
+
+});
+const upload = multer({ storage });
+
+const subirArchivo = async (req, res = express.response) => {
+  try {
+    console.log(req.body);
+    const {filename, mimetype, path } = req.file;
+    const {telefono, email, idUser} = req.body;
+    const extensiones = ['pdf', 'docx', 'pptx', 'xlsx', 'txt', 'zip', '7zip'];
+    const ext = filename.split('.').reverse()[0];
+    console.log(ext, filename);
+    
+    const {id} = await SetFileWhatsApp(filename, mimetype, telefono, path);
+    console.log(id);
+    const rutaBlobname = await cargarArchivo(filename, mimetype, telefono);
+    
+    if (mimetype.includes("image")) {
+      const data = SampleImage(telefono, id);
+      req.io.to(idUser).emit('archivo-enviado', await guardarArchivoEnviado(telefono, email, rutaBlobname, 'image'));
+      await SendImageWhatsApp(data);
+    };
+    if (extensiones.includes(ext)) {
+      const data = SampleDocument(telefono, id, filename);
+      req.io.to(idUser).emit('archivo-enviado', await guardarArchivoEnviado(telefono, email, rutaBlobname, 'document'));
+      await SendDocumentWhatsApp(data);
+    }
+    
+
+    
+    res.send('Archivo recibido');
+    
+  } catch (error) {
+    res.status(500).json({
+      response: 'Hubo un error al regresar la descarga'
+    });
+  }
+};
+
+
+module.exports = {
+  entregarArchivoBuffer,
+  subirArchivo,
+  upload,
+}
