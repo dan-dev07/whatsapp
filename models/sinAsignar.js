@@ -25,7 +25,7 @@ const SinAsignarSchema = Schema({
     },
     filename:{
       type:String,
-      required:false
+      required:false,
     },
     mensaje:{
       type:String,

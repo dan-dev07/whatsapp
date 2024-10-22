@@ -4,11 +4,10 @@ const cors = require('cors');
 const { dbConnection } = require('../database/config');
 const socketio = require('socket.io');
 const { comprobarJWT } = require('../helpers/jwt');
-const { obtenerPendientes, agregarPendiente } = require('../controller/sinAsignar');
-const { obtenerPacientesPorUsuario, agregarPaciente, obtenerConversacionActual, guardarMensajeEnviado, buscarNumeroExistente } = require('../controller/paciente');
-const { VerifyToken, GuardarMensajeRecibido, SendMessageWhatsApp, SendImageWhatsApp, SendDocumentWhatsApp } = require('../controller/whatsapp');
-const { SampleImage, SampleDocument } = require('../helpers/textTypes');
-const { numeroTelefono, rutaDescargaArchivoRecibido } = require('../helpers/funciones');
+const { obtenerPendientes, agregarPendiente, agregarDesdePaciente } = require('../controller/sinAsignar');
+const { obtenerPacientesPorUsuario, agregarPaciente, obtenerConversacionActual, guardarMensajeEnviado, quitarUsuario, reasignarPaciente } = require('../controller/paciente');
+const { SendMessageWhatsApp } = require('../controller/whatsapp');
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -37,86 +36,9 @@ app.use(cors());
 //rutas
 app.use('/api/media', require('../router/media'));
 app.use('/api/Login', require('../router/auth'));
-app.get('/api/whatsapp', VerifyToken);
-app.post('/api/whatsapp', async (req, res = express.response) => {
-
-  try {
-    const entry = req.body['entry'][0];
-    const changes = entry['changes'][0];
-    const value = changes['value'];
-    const messageObject = value['messages'];
-    console.log(entry);
-
-    if (typeof messageObject !== 'undefined') {
-      const type = messageObject[0]['type'];
-      if (type === 'text') {
-        const messages = messageObject[0];
-        const text = messages['text']['body'];
-        const number = numeroTelefono(messages);
-        const resExistente = await buscarNumeroExistente(number);
-        if (resExistente.ok === false) {
-          const respPendientes = await agregarPendiente(text, number, type);
-          if (respPendientes.ok) {
-            io.emit('mensajes-sinAsignar', await obtenerPendientes());
-          }
-        } else {
-          const mensaje = await GuardarMensajeRecibido(text, number, type);
-          const { ultimoMsg, id } = mensaje;
-          io.to(id).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
-          io.to(id).emit('mis-mensajes', await obtenerPacientesPorUsuario(resExistente.usuarioAsignado.email));
-          // SendMessageWhatsApp(text);
-        };
-      };
-      if (type === 'image') {
-        const messages = messageObject[0];
-        const number = numeroTelefono(messages);
-        const {ruta, id:imagenId} = await rutaDescargaArchivoRecibido(messages, number, type);
-        console.log('ruta',ruta);
-        const resExistente = await buscarNumeroExistente(number);
-        if (resExistente.ok === false) {
-          const respPendientes = await agregarPendiente('Imagen Recibido', number, type, ruta);
-          if (!respPendientes.error) {
-            io.emit('mensajes-sinAsignar', await obtenerPendientes());
-          }
-        }
-        else {
-          const mensaje = await GuardarMensajeRecibido('Imagen Recibido',number, type, ruta);
-          const { ultimoMsg, id } = mensaje;
-          console.log('ultimoMsg',ultimoMsg);
-          io.to(id).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
-          io.to(id).emit('mis-mensajes', await obtenerPacientesPorUsuario(resExistente.usuarioAsignado.email));
-          // const data = SampleImage(number, imagenId);
-          // SendImageWhatsApp(data);
-        };
-      }
-      if (type === 'document') {
-        const messages = messageObject[0];
-        const number = numeroTelefono(messages);
-        const { ruta, filename, id:documentId } = await rutaDescargaArchivoRecibido(messages, number, type);
-        const resExistente = await buscarNumeroExistente(number);
-        if (resExistente.ok === false) {
-          const respPendientes = await agregarPendiente('Documento Recibido',number, type, ruta, filename);
-          if (!respPendientes.err) {
-            io.sockets.emit('mensajes-sinAsignar', await obtenerPendientes());
-          }
-        }
-        else {
-          const mensaje = await GuardarMensajeRecibido('Documento Recibido',number, type, ruta, filename);
-          const { ultimoMsg, id } = mensaje;
-          io.to(id).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
-          io.to(id).emit('mis-mensajes', await obtenerPacientesPorUsuario(resExistente.usuarioAsignado.email));
-
-          // const data = SampleDocument(number, documentId, filename);
-          // SendDocumentWhatsApp(data);
-        };
-      };
-    };
-    res.send('EVENT_RECEIVED');
-  } catch (error) {
-    console.log(error);
-    res.send('EVENT_RECEIVED');
-  };
-});
+app.use('/api/Usuarios', require('../router/usuarios'));
+app.use('/api/whatsapp', require('../router/whatsapp'));
+app.use('/api/datos', require('../router/datos'));
 
 //io
 io.on('connection', async (socket) => {
@@ -155,6 +77,30 @@ io.on('connection', async (socket) => {
     socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.email));
   });
 
+  socket.on('liberar-paciente', async ({telefono, email}) =>{
+    const pacienteSinAsignar = await quitarUsuario(telefono);
+    if (!pacienteSinAsignar.ok) {
+      return false;
+    };
+    const agregarSinAsignar = await agregarDesdePaciente(pacienteSinAsignar.paciente);
+    if (!agregarSinAsignar.ok || agregarSinAsignar.err) {
+      return false;
+    };
+    socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(email));
+    io.emit('mensajes-sinAsignar', await obtenerPendientes()); 
+  });
+
+  socket.on('reasignar-paciente', async (data) =>{
+    console.log(data);
+    const {telefono, nuevoUsuario, anteriorUsuario} = data;
+    const reasignar = await reasignarPaciente(telefono, nuevoUsuario, anteriorUsuario);
+    if (reasignar.err || !reasignar.ok) {
+      return;
+    }
+    io.to(anteriorUsuario.id).emit('mis-mensajes', await obtenerPacientesPorUsuario(anteriorUsuario.email));
+    io.to(nuevoUsuario.id).emit('mis-mensajes', await obtenerPacientesPorUsuario(nuevoUsuario.email));
+  });
+
   socket.on('disconnect', () => {
     console.log('Cliente desconectado:', socket.id);
   });
@@ -162,7 +108,4 @@ io.on('connection', async (socket) => {
 
 server.listen(PORT, () => {
   console.log('Servidor corriendo en el puerto: ', PORT);
-})
-
-// git branch -M main
-// git push -u origin main
+});

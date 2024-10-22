@@ -2,6 +2,7 @@ const Paciente = require('../models/paciente');
 const SinAsignar = require('../models/sinAsignar');
 const dayjs = require('dayjs');
 const { v4: uuidv4 } = require('uuid');
+const Usuario = require('../models/usuario');
 
 const agregarPaciente = async (datos) => {
   try {
@@ -10,7 +11,8 @@ const agregarPaciente = async (datos) => {
     const user = {nombre, email, id};
     const pendiente = await SinAsignar.findOne({telefono});
     const chats = pendiente.mensajes;
-    const paciente = await Paciente.create({ nombrePaciente ,telefono, usuarioAsignado:user, ultimaComunicacion, chats:chats });
+    const paciente = await Paciente({ nombrePaciente ,telefono, usuarioAsignado:user, ultimaComunicacion, chats:chats });
+    paciente.save();
     await SinAsignar.findOneAndDelete({telefono});
     
     return ({
@@ -27,8 +29,8 @@ const obtenerPacientesPorUsuario = async (email) => {
     const pacientesPorUsuario = (await Paciente.find({'usuarioAsignado.email':email})).map(p =>{
       const {nombrePaciente, telefono, chats, id} = p;
       const ultimoMsg = chats[chats.length - 1];
-      const {fecha, mensaje, leido } = ultimoMsg;
-      return {nombrePaciente, telefono, id, fecha, mensaje, leido};
+      const {fecha, mensaje, leido, tipo } = ultimoMsg;
+      return {nombrePaciente, telefono, id, fecha, mensaje, leido, tipo};
     });
     return pacientesPorUsuario.sort((a, b) => a.leido - b.leido );
   } catch (error) {
@@ -115,6 +117,33 @@ const buscarNumeroExistente = async (telefono) => {
   }
 };
 
+const quitarUsuario = async(telefono)=>{
+  try {
+    const pacienteActual = await Paciente.findOneAndDelete({telefono}, {new:true});
+    if (!pacienteActual) {
+      return {ok:false}
+    }
+    return {ok:true, paciente:pacienteActual};
+  } catch (error) {
+    console.log(error);
+    return {err: 'Error al eliminar un usuario de un paciente'};
+  };
+};
+
+const reasignarPaciente =async (telefono, nuevoUsuario, anteriorUsuario)=>{
+  try {
+    const pacienteActualizado = await Paciente.findOneAndUpdate({telefono, 'usuarioAsignado.email': anteriorUsuario.email}, {usuarioAsignado:nuevoUsuario}, {new:true});
+    console.log('pacienteActualizado',pacienteActualizado);
+    if (pacienteActualizado.usuarioAsignado.email === anteriorUsuario.nombre) {
+      return {ok:false};
+    }
+    return {ok:true};
+  } catch (error) {
+    console.log(error);
+    return {err: 'Error al reasignar al paciente' };
+  }
+}
+
 module.exports = {
   agregarPaciente,
   obtenerPacientesPorUsuario,
@@ -122,4 +151,6 @@ module.exports = {
   guardarArchivoEnviado,
   obtenerConversacionActual,
   buscarNumeroExistente,
+  quitarUsuario,
+  reasignarPaciente,
 }

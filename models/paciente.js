@@ -18,11 +18,12 @@ const PacienteSchema = new Schema({
     },
     email: {
       type: String,
-      required: true
+      required: true,
+      trim:true
     },
     id:{
-      type: String,
-      required: true
+      type:String,
+      required:true
     }
   },
   ultimaComunicacion: {

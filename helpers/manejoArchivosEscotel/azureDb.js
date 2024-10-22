@@ -46,7 +46,7 @@ const cargarArchivo = async (filename, mimetype, telefono) => {
       }
     });
     console.log(`El archivo se ha subido a ${blobName} en el contenedor ${containerName}`);
-
+    fs.unlinkSync(ruta);
     // Cargar el buffer en Azure Blob Storage
     return blobName;
 

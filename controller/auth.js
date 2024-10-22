@@ -82,8 +82,6 @@ const nuevoToken = async (req, res = response) => {
     const token = await generarJWT(usuario);
 
     //Obtener el usuario por UID
-    // const usuarioDB = await Usuario.findById(usuario.id);
-
     res.json({
       token
     })
@@ -91,9 +89,9 @@ const nuevoToken = async (req, res = response) => {
     console.log(error);
     res.status(500).json({
       response: "No se encontró al usuario",
-    })
-  }
-}
+    });
+  };
+};
 
 module.exports = {
   crearUsario,

@@ -4,20 +4,24 @@ const UsuarioSchema = Schema({
   nombre: {
     type:String,
     required: true,
+    trim:true
   },
   email:{
     type:String,
     required:true,
-    uniquie:true
+    uniquie:true,
+    trim:true
   },
   password:{
     type:String,
     required:true,
+    trim:true
   },
-  uid:{
-    type:Number,
-    required:true
-  }
+  rol:[{
+    type:String,
+    required:true,
+    trim:true
+  }]
 });
 
 UsuarioSchema.method('toJSON', function () {
