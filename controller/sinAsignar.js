@@ -1,11 +1,5 @@
-const { MensajeError } = require('../helpers/error');
+const { newFecha } = require('../helpers/funciones');
 const SinAsignar = require('../models/sinAsignar');
-const dayjs = require('dayjs');
-const utc = require('dayjs/plugin/utc');
-const timezone = require('dayjs/plugin/timezone');
-dayjs.extend(utc);
-dayjs.extend(timezone);
-const mexicoCityTime = dayjs.tz('America/Mexico_City');
 
 const obtenerPendientes = async () => {
   try {
@@ -41,7 +35,8 @@ const obtenerPendientes = async () => {
 
 const agregarPendiente = async (mensaje, telefono, tipo, urlDocumento, filename, emisor='Paciente')=>{
   try {
-    const fecha = mexicoCityTime.format('DD/MM/YYYY HH:mm a');
+    // const fecha = dayjs().format('DD/MM/YYYY HH:mm a');
+    const fecha = newFecha();
     const mensajes = { fecha, emisor, tipo, urlDocumento, filename, mensaje};
     // buscar en pendientes y actualizar
     const mensajePaciente = await SinAsignar.findOne({ telefono });

@@ -1,7 +1,6 @@
 const { response } = require('express');
 require('dotenv').config();
 const https = require('https');
-const dayjs = require('dayjs');
 const Paciente = require('../models/paciente');
 const axios = require('axios');
 const path = require('path');
@@ -10,7 +9,7 @@ const FormData = require('form-data');
 const fs = require('fs');
 const { urlMeta } = require('../cons/urls');
 const { optionsMessage } = require('../cons/optionsMessage');
-const { numeroTelefono, rutaDescargaArchivoRecibido } = require('../helpers/funciones');
+const { numeroTelefono, rutaDescargaArchivoRecibido, newFecha } = require('../helpers/funciones');
 const { buscarNumeroExistente, obtenerPacientesPorUsuario } = require('./paciente');
 const { agregarPendiente, obtenerPendientes } = require('./sinAsignar');
 
@@ -222,7 +221,7 @@ const SetFileWhatsApp = async (filename, mimetype, telefono, pathFile) => {
 const GuardarMensajeRecibido = async (texto, telefono, tipo, urlDocumento, filename) => {
   try {
     const mensaje = {
-      fecha: dayjs().format('DD/MM/YYYY HH:mm a'),
+      fecha: newFecha(),
       emisor: 'Paciente',
       tipo,
       filename,
