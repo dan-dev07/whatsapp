@@ -21,7 +21,6 @@ const Whatsapp = async (req, res = response) => {
     const changes = entry['changes'][0];
     const value = changes['value'];
     const messageObject = value['messages'];
-    console.log(entry);
 
     if (typeof messageObject !== 'undefined') {
       const type = messageObject[0]['type'];
@@ -49,14 +48,13 @@ const Whatsapp = async (req, res = response) => {
         const resExistente = await buscarNumeroExistente(number);
         if (resExistente.ok === false) {
           const respPendientes = await agregarPendiente('Imagen Recibido', number, type, ruta);
-          if (!respPendientes.error) {
+          if (!respPendientes.err) {
             req.io.emit('mensajes-sinAsignar', await obtenerPendientes());
           }
         }
         else {
           const mensaje = await GuardarMensajeRecibido('Imagen Recibido',number, type, ruta);
           const { ultimoMsg, id } = mensaje;
-          console.log('ultimoMsg',ultimoMsg);
           req. io.to(id).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
           req.io.to(id).emit('mis-mensajes', await obtenerPacientesPorUsuario(resExistente.usuarioAsignado.email));
         };
@@ -236,7 +234,6 @@ const GuardarMensajeRecibido = async (texto, telefono, tipo, urlDocumento, filen
       { telefono },
       { $push: { chats: mensaje } },
       { new: true });
-    console.log('Paciente actualizado');
     const ultimoMsg = paciente.chats[paciente.chats.length - 1];
     const { id } = paciente.usuarioAsignado;
     return { 

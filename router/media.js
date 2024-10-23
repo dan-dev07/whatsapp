@@ -6,7 +6,6 @@ const {Router} = require('express');
 const router = Router();
 const {check} = require('express-validator');
 const {validarCampos} = require('../middlewares/validarCampos');
-const validarJWT = require('../helpers/validarJWT');
 const { entregarArchivoBuffer, subirArchivo, upload } = require('../controller/media');
 
 router.post('/', [

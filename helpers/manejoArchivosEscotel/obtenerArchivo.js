@@ -1,21 +1,5 @@
-const axios = require('axios');
 const { cargarArchivo } = require('./azureDb');
-
-const fetchApi = (url, responseType) => {
-  try {
-    const instance = axios({
-      method: 'GET',
-      url,
-      responseType,
-      headers: {
-        'Authorization': `Bearer ${process.env.WHATSAPP_API_KEY}`
-      }
-    });
-    return instance;
-  } catch (err) {
-    MensajeError(`${baseURL} --- ${err}`, err);
-  };
-};
+const { fetchApi } = require('../../api/api');
 
 const obtenerDescarga = async (id)=>{
   try {
@@ -37,6 +21,7 @@ const guardarArchivo = async (descarga,telefono, id, tipo, filename) => {
     const respGuardado = await cargarArchivo(descarga, telefono, id, tipo, filename);
     return respGuardado;
   } catch (error) {
+    console.log(error);
     return {
       error:respGuardado.error
     }

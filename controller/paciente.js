@@ -1,7 +1,6 @@
 const Paciente = require('../models/paciente');
 const SinAsignar = require('../models/sinAsignar');
 const dayjs = require('dayjs');
-const { v4: uuidv4 } = require('uuid');
 const Usuario = require('../models/usuario');
 
 const agregarPaciente = async (datos) => {
@@ -14,7 +13,7 @@ const agregarPaciente = async (datos) => {
     const paciente = await Paciente({ nombrePaciente ,telefono, usuarioAsignado:user, ultimaComunicacion, chats:chats });
     paciente.save();
     await SinAsignar.findOneAndDelete({telefono});
-    
+    console.log('Paciente agregado');
     return ({
       paciente
     });
@@ -132,8 +131,20 @@ const quitarUsuario = async(telefono)=>{
 
 const reasignarPaciente =async (telefono, nuevoUsuario, anteriorUsuario)=>{
   try {
+    if (anteriorUsuario.nombre === '' ||
+        anteriorUsuario.email  === '' ||
+        anteriorUsuario.id     === '' ) {
+          // const { nombrePaciente = 'Pruebas', telefono, nombre, email, id, ultimaComunicacion } = datos;
+      const usuario = await Usuario.findOne({email:nuevoUsuario.email});
+      if (!usuario) {
+        return {ok:false};
+      }
+      const {nombre, email, id} = usuario;
+      const nuevoPaciente = await agregarPaciente({telefono, nombre, email, id, ultimaComunicacion:''});
+      return {ok:true}; 
+    }
+
     const pacienteActualizado = await Paciente.findOneAndUpdate({telefono, 'usuarioAsignado.email': anteriorUsuario.email}, {usuarioAsignado:nuevoUsuario}, {new:true});
-    console.log('pacienteActualizado',pacienteActualizado);
     if (pacienteActualizado.usuarioAsignado.email === anteriorUsuario.nombre) {
       return {ok:false};
     }

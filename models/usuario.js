@@ -21,7 +21,11 @@ const UsuarioSchema = Schema({
     type:String,
     required:true,
     trim:true
-  }]
+  }],
+  activo:{
+    type:Boolean,
+    require:true,
+  }
 });
 
 UsuarioSchema.method('toJSON', function () {

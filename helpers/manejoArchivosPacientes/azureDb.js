@@ -31,7 +31,7 @@ const cargarArchivo =async(buffer, telefono, id, tipo, filename)=>{
   
     // Subir el blob
     await blockBlobClient.uploadData(buffer);
-    console.log(`El archivo se ha subido a ${blobName} en el contenedor ${containerName}`);
+    // console.log(`El archivo se ha subido a ${blobName} en el contenedor ${containerName}`);
     return blobName;
     
   } catch (error) {

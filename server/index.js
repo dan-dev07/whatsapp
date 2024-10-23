@@ -7,6 +7,7 @@ const { comprobarJWT } = require('../helpers/jwt');
 const { obtenerPendientes, agregarPendiente, agregarDesdePaciente } = require('../controller/sinAsignar');
 const { obtenerPacientesPorUsuario, agregarPaciente, obtenerConversacionActual, guardarMensajeEnviado, quitarUsuario, reasignarPaciente } = require('../controller/paciente');
 const { SendMessageWhatsApp } = require('../controller/whatsapp');
+const { actulizarEstado } = require('../controller/usuario');
 
 
 const app = express();
@@ -57,10 +58,10 @@ io.on('connection', async (socket) => {
   socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.email));
 
   //asignar a los pacientes a un usuario
-  socket.on('paciente-asignado', async (user) => {
-    await agregarPaciente(user);
+  socket.on('paciente-asignado', async (datos) => {
+    await agregarPaciente(datos);
     io.emit('mensajes-sinAsignar', await obtenerPendientes());
-    io.to(user.id).emit('mis-mensajes', await obtenerPacientesPorUsuario(user.email));
+    io.to(datos.id).emit('mis-mensajes', await obtenerPacientesPorUsuario(datos.email));
   });
 
   //conversación actual
@@ -99,6 +100,13 @@ io.on('connection', async (socket) => {
     }
     io.to(anteriorUsuario.id).emit('mis-mensajes', await obtenerPacientesPorUsuario(anteriorUsuario.email));
     io.to(nuevoUsuario.id).emit('mis-mensajes', await obtenerPacientesPorUsuario(nuevoUsuario.email));
+  });
+
+  socket.on('cambiar-estado', async (data, callback) =>{
+    console.log(data);
+    const res = await actulizarEstado(data.email, data.activo);
+    console.log(res);
+    callback(res);
   });
 
   socket.on('disconnect', () => {

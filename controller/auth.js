@@ -14,7 +14,7 @@ const crearUsario = async (req, res = response) => {
         response: 'El correo ya existe',
       });
     };
-
+    req.body.activo = true;
     const usuario = new Usuario(req.body);
     //Encriptar contraseña
     const salt = bcrypt.genSaltSync();
@@ -26,9 +26,10 @@ const crearUsario = async (req, res = response) => {
     //Generar JWT
     const token = await generarJWT(usuario);
 
-    res.json({
-      token
-    })
+    // res.json({
+    //   token
+    // })
+    res.send('Usuario creado');
 
   } catch (error) {
     console.log(error);
@@ -93,8 +94,24 @@ const nuevoToken = async (req, res = response) => {
   };
 };
 
+const actualizarUsuario =async (req, res = response) => {
+  try {
+    const {nombre, password, email, rol} = req.body;
+    const actUsuario = await Usuario.findOneAndUpdate({email}, {nombre, password, email, rol}, {new:true});
+    if (actUsuario) {
+      return res.send('Usuario actualizado');
+    }
+    return res.send('Usuario no actualizado');
+  } catch (error) {
+    res.status(500).json({
+      response: "No se encontró al usuario",
+    });
+  }
+}
+
 module.exports = {
   crearUsario,
   ingresar,
-  nuevoToken
+  nuevoToken,
+  actualizarUsuario,
 }
