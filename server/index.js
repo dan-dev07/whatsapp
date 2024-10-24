@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 3000;
 const server = require('http').createServer(app);
 const io = socketio(server, {
   cors: {
-    origin: ['http://localhost:5173', '172.30.96.1:5173', '192.168.16.78:5173','https://stupendous-tarsier-6726ab.netlify.app/'],
+    origin: ['http://localhost:5173', '172.30.96.1:5173', '192.168.16.78:5173', 'https://stupendous-tarsier-6726ab.netlify.app/'],
     credentials: true,
   }
 });
@@ -78,31 +78,72 @@ io.on('connection', async (socket) => {
     socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.email));
   });
 
-  socket.on('liberar-paciente', async ({telefono, email}) =>{
+  socket.on('liberar-paciente', async ({ telefono, email }) => {
+    const pacienteSinAsignar = await quitarUsuario(telefono);
+    if (!pacienteSinAsignar.ok) {
+      return pacienteSinAsignar.err;
+    };
+    const agregarSinAsignar = await agregarDesdePaciente(pacienteSinAsignar.paciente);
+    if (!agregarSinAsignar.ok) {
+      return pacienteSinAsignar.err;
+    };
+    socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(email));
+    io.emit('mensajes-sinAsignar', await obtenerPendientes());
+    io.emit('actualizar-ventana', {
+      todosLosMensajes: true
+    })
+  });
+
+  socket.on('liberar-paciente-por-supervisor', async (data, callback) => {
+    console.log(data);
+    const { email, telefono, id } = data;
     const pacienteSinAsignar = await quitarUsuario(telefono);
     if (!pacienteSinAsignar.ok) {
       return false;
     };
     const agregarSinAsignar = await agregarDesdePaciente(pacienteSinAsignar.paciente);
-    if (!agregarSinAsignar.ok || agregarSinAsignar.err) {
-      return false;
-    };
-    socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(email));
-    io.emit('mensajes-sinAsignar', await obtenerPendientes()); 
+    io.to(id).emit('mis-mensajes', await obtenerPacientesPorUsuario(email));
+    io.emit('mensajes-sinAsignar', await obtenerPendientes());
+    callback(agregarSinAsignar);
   });
 
-  socket.on('reasignar-paciente', async (data) =>{
+  socket.on('liberar-paciente-por-supervisor-todosLosMensajes', data => {
     console.log(data);
-    const {telefono, nuevoUsuario, anteriorUsuario} = data;
-    const reasignar = await reasignarPaciente(telefono, nuevoUsuario, anteriorUsuario);
-    if (reasignar.err || !reasignar.ok) {
-      return;
-    }
-    io.to(anteriorUsuario.id).emit('mis-mensajes', await obtenerPacientesPorUsuario(anteriorUsuario.email));
-    io.to(nuevoUsuario.id).emit('mis-mensajes', await obtenerPacientesPorUsuario(nuevoUsuario.email));
   });
 
-  socket.on('cambiar-estado', async (data, callback) =>{
+  socket.on('reasignar-paciente', async (data) => {
+    console.log(data);
+    const { telefono, nuevoUsuario, anteriorUsuario } = data;
+    const reasignar = await reasignarPaciente(telefono, nuevoUsuario, anteriorUsuario);
+    if (reasignar.ok) {
+      io.to(anteriorUsuario.id).emit('mis-mensajes', await obtenerPacientesPorUsuario(anteriorUsuario.email));
+      io.to(nuevoUsuario.id).emit('mis-mensajes', await obtenerPacientesPorUsuario(nuevoUsuario.email));
+    };
+  });
+
+  socket.on('reasignar-paciente-por-supervisor', async (data) => {
+    console.log(data);
+    const { telefono, nuevoUsuario, anteriorUsuario } = data;
+    if (anteriorUsuario.nombre === '' ||
+      anteriorUsuario.email === '' ||
+      anteriorUsuario.id === '') {
+      const reasignar = await reasignarPaciente(telefono, nuevoUsuario);
+      io.to(nuevoUsuario.id).emit('mis-mensajes', await obtenerPacientesPorUsuario(nuevoUsuario.email));
+      io.emit('actualizar-ventana', {
+        todosLosMensajes: true
+      })
+    }
+    const reasignar = await reasignarPaciente(telefono, nuevoUsuario, anteriorUsuario);
+    if (reasignar.ok) {
+      io.to(anteriorUsuario.id).emit('mis-mensajes', await obtenerPacientesPorUsuario(anteriorUsuario.email));
+      io.to(nuevoUsuario.id).emit('mis-mensajes', await obtenerPacientesPorUsuario(nuevoUsuario.email));
+      io.emit('actualizar-ventana', {
+        todosLosMensajes: true
+      })
+    }
+  });
+
+  socket.on('cambiar-estado', async (data, callback) => {
     console.log(data);
     const res = await actulizarEstado(data.email, data.activo);
     console.log(res);
