@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 3000;
 const server = require('http').createServer(app);
 const io = socketio(server, {
   cors: {
-    origin: ['http://localhost:5173', '172.30.96.1:5173', '192.168.16.78:5173', 'https://phenomenal-dodol-9387b3.netlify.app/'],
+    origin: ['http://localhost:5173', '172.30.96.1:5173', '192.168.16.78:5173', 'https://phenomenal-dodol-9387b3.netlify.app'],
     credentials: true,
   }
 });
@@ -95,7 +95,6 @@ io.on('connection', async (socket) => {
   });
 
   socket.on('liberar-paciente-por-supervisor', async (data, callback) => {
-    console.log(data);
     const { email, telefono, id } = data;
     const pacienteSinAsignar = await quitarUsuario(telefono);
     if (!pacienteSinAsignar.ok) {
@@ -108,18 +107,16 @@ io.on('connection', async (socket) => {
   });
 
   socket.on('reasignar-paciente', async (data) => {
-    console.log(data);
     const { telefono, nuevoUsuario, anteriorUsuario } = data;
     const reasignar = await reasignarPaciente(telefono, nuevoUsuario, anteriorUsuario);
     if (reasignar.ok) {
       io.to(anteriorUsuario.id).emit('mis-mensajes', await obtenerPacientesPorUsuario(anteriorUsuario.email));
       io.to(nuevoUsuario.id).emit('mis-mensajes', await obtenerPacientesPorUsuario(nuevoUsuario.email));
-      
+
     };
   });
 
   socket.on('reasignar-paciente-por-supervisor', async (data) => {
-    console.log(data);
     const { telefono, nuevoUsuario, anteriorUsuario } = data;
     if (anteriorUsuario.nombre === '' ||
       anteriorUsuario.email === '' ||
@@ -129,7 +126,8 @@ io.on('connection', async (socket) => {
       io.emit('mensajes-sinAsignar', await obtenerPendientes());
       io.emit('actualizar-ventana', {
         todosLosMensajes: true
-      })
+      });
+      return;
     }
     const reasignar = await reasignarPaciente(telefono, nuevoUsuario, anteriorUsuario);
     if (reasignar.ok) {
@@ -137,14 +135,12 @@ io.on('connection', async (socket) => {
       io.to(nuevoUsuario.id).emit('mis-mensajes', await obtenerPacientesPorUsuario(nuevoUsuario.email));
       io.emit('actualizar-ventana', {
         todosLosMensajes: true
-      })
+      });
     }
   });
 
   socket.on('cambiar-estado', async (data, callback) => {
-    console.log(data);
     const res = await actulizarEstado(data.email, data.activo);
-    console.log(res);
     callback(res);
   });
 
