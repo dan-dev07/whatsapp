@@ -2,6 +2,7 @@ const Paciente = require('../models/paciente');
 const SinAsignar = require('../models/sinAsignar');
 const dayjs = require('dayjs');
 const Usuario = require('../models/usuario');
+const { newFecha } = require('../helpers/funciones');
 
 const agregarPaciente = async (datos) => {
   try {
@@ -52,15 +53,16 @@ const guardarMensajeEnviado = async (telefono, email, mensaje) => {
   };
 };
 
-const guardarArchivoEnviado = async (telefono, email, urlDocumento, tipo) => {
+const guardarArchivoEnviado = async (telefono, email, urlDocumento, tipo, filename) => {
   try {
-    const fecha = dayjs().format('DD/MM/YYYY HH:mm a');
+    const fecha = newFecha();
     const mensaje = {
       fecha,
       emisor: 'Escotel',
       tipo,
+      filename,
       urlDocumento,
-      mensaje: "Imagen enviado",
+      mensaje: tipo==='image'?"Imagen enviado":"Documento enviado",
       leido: false,
     }
     const paciente = await Paciente.findOneAndUpdate(

@@ -40,12 +40,12 @@ const cargarArchivo = async (filename, mimetype, telefono) => {
     const streamBuffer = fs.readFileSync(ruta)
 
     // Subir el blob
-    await blockBlobClient.upload(streamBuffer, streamBuffer.length, {
+    await blockBlobClient.uploadData(streamBuffer, streamBuffer.length, {
       blobHTTPHeaders:{
         blobContentType: mimetype
       }
     });
-    // console.log(`El archivo se ha subido a ${blobName} en el contenedor ${containerName}`);
+    console.log(`El archivo se ha subido a ${blobName} en el contenedor ${containerName}`);
     fs.unlinkSync(ruta);
     // Cargar el buffer en Azure Blob Storage
     return blobName;
