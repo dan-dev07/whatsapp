@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 3000;
 const server = require('http').createServer(app);
 const io = socketio(server, {
   cors: {
-    origin: ['http://localhost:5173', '172.30.96.1:5173', '192.168.16.78:5173', 'https://stupendous-tarsier-6726ab.netlify.app/'],
+    origin: ['http://localhost:5173', '172.30.96.1:5173', '192.168.16.78:5173', 'https://phenomenal-dodol-9387b3.netlify.app/'],
     credentials: true,
   }
 });
