@@ -21,7 +21,7 @@ const actulizarEstado = async (email, activo) => {
   try {
     const act = await Usuario.findOneAndUpdate({ email }, {activo}, {new:true});
 
-    return {ok:true};
+    return {ok:true,activo:act.activo};
   } catch (error) {
     console.log(error);
     return {

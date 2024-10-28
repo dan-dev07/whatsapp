@@ -17,14 +17,12 @@ const crearUsario = async (req, res = response) => {
     req.body.activo = true;
     const usuario = new Usuario(req.body);
     //Encriptar contraseña
-    const salt = bcrypt.genSaltSync();
+    const salt = bcrypt.genSaltSync(5);
     usuario.password = bcrypt.hashSync(password, salt);
-
     //Guardar usuario en la BD
     await usuario.save();
-
     //Generar JWT
-    const token = await generarJWT(usuario);
+    // const token = await generarJWT(usuario);
 
     // res.json({
     //   token
@@ -34,7 +32,7 @@ const crearUsario = async (req, res = response) => {
   } catch (error) {
     console.log(error);
     res.status(500).json({
-      response: 'Hubo un error al guardar los datos'
+      response: 'Hubo un error al crear nuevo usuario'
     });
   };
 };
@@ -96,15 +94,25 @@ const nuevoToken = async (req, res = response) => {
 
 const actualizarUsuario =async (req, res = response) => {
   try {
-    const {nombre, password, email, rol} = req.body;
-    const actUsuario = await Usuario.findOneAndUpdate({email}, {nombre, password, email, rol}, {new:true});
+    const {nombre, password, email, rol, activo} = req.body;
+    //Encriptar contraseña
+    const salt = bcrypt.genSaltSync(5);
+    const newPassword = bcrypt.hashSync(password, salt);
+
+    //Actualizar usuario
+    const actUsuario = await Usuario.findOneAndUpdate({email}, {nombre, password:newPassword, email, rol, activo}, {new:true});
     if (actUsuario) {
-      return res.send('Usuario actualizado');
+      return res.json({
+        actualizado:true,
+        nombre:actUsuario.nombre
+      });
     }
-    return res.send('Usuario no actualizado');
+    return res.json({
+      actualizado:false,
+    });
   } catch (error) {
     res.status(500).json({
-      response: "No se encontró al usuario",
+      response: "No se actualizó el usuario",
     });
   }
 }
