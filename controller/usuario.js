@@ -5,8 +5,8 @@ const obtenerUsuarios = async (req, res = express.response) => {
   try {
     const users = await Usuario.find();
     const usuarios = users.map(u => {
-      const { email, nombre, rol, id, activo } = u;
-      return { email, nombre, rol, id, activo };
+      const { email, nombre, rol, uid, activo } = u;
+      return { email, nombre, rol, uid, activo };
     })
     res.send(usuarios);
   } catch (error) {
@@ -17,9 +17,9 @@ const obtenerUsuarios = async (req, res = express.response) => {
   };
 };
 
-const actulizarEstado = async (email, activo) => {
+const actulizarEstado = async (uid, activo) => {
   try {
-    const act = await Usuario.findOneAndUpdate({ email }, {activo}, {new:true});
+    const act = await Usuario.findOneAndUpdate({ uid }, {activo}, {new:true});
 
     return {ok:true,activo:act.activo};
   } catch (error) {

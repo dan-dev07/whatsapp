@@ -1,3 +1,4 @@
+const { v4: uuidv4 } = require('uuid');
 const { newFecha } = require('../helpers/funciones');
 const SinAsignar = require('../models/sinAsignar');
 
@@ -9,13 +10,13 @@ const obtenerPendientes = async () => {
       return [];
     };
     const ultimoMensajeArray = pendientes.map(m => {
-      const { mensajes, telefono } = m;
+      const { mensajes, telefono, uid} = m;
       const ultimo = mensajes[mensajes.length - 1];
       return {
         telefono,
         mensaje: ultimo.mensaje,
         fecha: ultimo.fecha,
-        id: ultimo.id,
+        uid: uid,
         emisor: ultimo.emisor,
         tipo: ultimo.tipo,
         idArchivo: ultimo.idArchivo,
@@ -37,12 +38,13 @@ const agregarPendiente = async (mensaje, telefono, tipo, urlDocumento, filename,
   try {
     // const fecha = dayjs().format('DD/MM/YYYY HH:mm a');
     const fecha = newFecha();
+    const uid = uuidv4();
     const mensajes = { fecha, emisor, tipo, urlDocumento, filename, mensaje};
     // buscar en pendientes y actualizar
     const mensajePaciente = await SinAsignar.findOne({ telefono });
     if (!mensajePaciente) {
       //guardar mensaje
-      const agregarMensaje = await SinAsignar.create({ telefono, mensajes });
+      const agregarMensaje = await SinAsignar.create({ telefono, uid, mensajes });
       return {ok:true};
     };
     const res = await SinAsignar.findOneAndUpdate({ telefono },
@@ -62,8 +64,8 @@ const agregarPendiente = async (mensaje, telefono, tipo, urlDocumento, filename,
 
 const agregarDesdePaciente =async (paciente)=>{
   try {
-    const {chats, telefono} = paciente;
-    const nuevoPendiente = await SinAsignar({telefono, mensajes:chats});
+    const {chats, telefono, uid} = paciente;
+    const nuevoPendiente = await SinAsignar({telefono, uid, mensajes:chats});
     nuevoPendiente.save();
     console.log('Paciente reasignado a Pendientes');
     if (!nuevoPendiente) {

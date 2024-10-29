@@ -1,17 +1,15 @@
 const Paciente = require('../models/paciente');
 const SinAsignar = require('../models/sinAsignar');
-const dayjs = require('dayjs');
 const Usuario = require('../models/usuario');
 const { newFecha } = require('../helpers/funciones');
 
 const agregarPaciente = async (datos) => {
   try {
-    const { nombrePaciente = 'Pruebas', telefono, nombre, email, id, ultimaComunicacion } = datos;
-
-    const user = { nombre, email, id };
-    const pendiente = await SinAsignar.findOne({ telefono });
+    const { nombrePaciente = 'Pruebas', telefono, nombre, email, userUid, pacienteUid, ultimaComunicacion } = datos;
+    const user = { nombre, email, uid:userUid };
+    const pendiente = await SinAsignar.findOne({ telefono, uid:pacienteUid });
     const chats = pendiente.mensajes;
-    const paciente = await Paciente({ nombrePaciente, telefono, usuarioAsignado: user, ultimaComunicacion, chats: chats });
+    const paciente = await Paciente({ nombrePaciente, telefono, uid:pacienteUid, usuarioAsignado: user, ultimaComunicacion, chats: chats });
     paciente.save();
     await SinAsignar.findOneAndDelete({ telefono });
     console.log('Paciente agregado');
@@ -24,13 +22,13 @@ const agregarPaciente = async (datos) => {
   };
 };
 
-const obtenerPacientesPorUsuario = async (email) => {
+const obtenerPacientesPorUsuario = async (uid) => {
   try {
-    const pacientesPorUsuario = (await Paciente.find({ 'usuarioAsignado.email': email })).map(p => {
-      const { nombrePaciente, telefono, chats, id } = p;
-      const ultimoMsg = chats[chats.length - 1];
+    const pacientesPorUsuario = (await Paciente.find({ 'usuarioAsignado.uid': uid })).map(p => {
+      const { nombrePaciente, telefono, chats, uid } = p;
+      const ultimoMsg = chats[chats.length - 1];  
       const { fecha, mensaje, leido, tipo } = ultimoMsg;
-      return { nombrePaciente, telefono, id, fecha, mensaje, leido, tipo };
+      return { nombrePaciente, telefono, uid, fecha, mensaje, leido, tipo };
     });
     return pacientesPorUsuario.sort((a, b) => a.leido - b.leido);
   } catch (error) {
@@ -118,9 +116,9 @@ const buscarNumeroExistente = async (telefono) => {
   }
 };
 
-const quitarUsuario = async (telefono) => {
+const quitarUsuario = async (telefono, uid) => {
   try {
-    const pacienteActual = await Paciente.findOneAndDelete({ telefono }, { new: true });
+    const pacienteActual = await Paciente.findOneAndDelete({ telefono, uid }, { new: true });
     if (!pacienteActual) {
       return { ok: false }
     }
@@ -131,19 +129,22 @@ const quitarUsuario = async (telefono) => {
   };
 };
 
-const reasignarPaciente = async (telefono, nuevoUsuario, anteriorUsuario) => {
+const reasignarPaciente = async (telefono, nuevoUsuario, anteriorUsuario, pacienteUid) => {
   try {
     if (!anteriorUsuario) {
-      const usuario = await Usuario.findOne({ email: nuevoUsuario.email });
+      const usuario = await Usuario.findOne({ uid: nuevoUsuario.uid });
       if (!usuario) {
         return { ok: false };
       }
-      const { nombre, email, id } = usuario;
-      const nuevoPaciente = await agregarPaciente({ telefono, nombre, email, id, ultimaComunicacion: '' });
+      const { nombre, email} = usuario;
+      const nuevoPaciente = await agregarPaciente({ telefono, nombre, email, userUid:usuario.uid, pacienteUid, ultimaComunicacion: '' }, {new:true});
+      if (!nuevoPaciente) {
+        return { ok: false };  
+      }
       return { ok: true };
     }
 
-    const pacienteActualizado = await Paciente.findOneAndUpdate({ telefono, 'usuarioAsignado.email': anteriorUsuario.email }, { usuarioAsignado: nuevoUsuario }, { new: true });
+    const pacienteActualizado = await Paciente.findOneAndUpdate({ telefono, 'usuarioAsignado.uid': anteriorUsuario.uid }, { usuarioAsignado: nuevoUsuario }, { new: true });
     if (!pacienteActualizado) {
       return { ok: false };
     }

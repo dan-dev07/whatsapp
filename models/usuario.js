@@ -25,6 +25,10 @@ const UsuarioSchema = Schema({
   activo:{
     type:Boolean,
     require:true,
+  },
+  uid:{
+    type:String,
+    require:true
   }
 });
 

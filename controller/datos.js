@@ -8,31 +8,33 @@ const allMessages = async (req, res = response) => {
     const pendientes = await SinAsignar.find();
 
     const arregloPendientes = pendientes.map(m => {
-      const { mensajes, telefono } = m;
+      const { mensajes } = m;
       const ultimo = mensajes[mensajes.length - 1];
       return {
-        telefono,
+        uid:m.uid,
+        telefono:m.telefono,
         fecha: ultimo.fecha,
         usuario:{
           nombre:'', 
           email:'', 
-          id:''
+          uid:''
         }
       }
     });
 
     const arregloPacientes = mensajesPacientes.map((m) => {
-      const { nombrepaciente, telefono, usuarioAsignado: { nombre, email, id }, chats } = m;
+      const { usuarioAsignado, chats } = m;
       const fecha = chats[chats.length - 1].fecha;
 
       return {
-        nombrepaciente,
-        telefono,
+        nombrepaciente:m.nombrePaciente,
+        uid: m.uid,
+        telefono: m.telefono,
         fecha,
         usuario: {
-          nombre,
-          email,
-          id
+          nombre:usuarioAsignado.nombre,
+          email:usuarioAsignado.email,
+          uid:usuarioAsignado.uid
         }
       }
     });

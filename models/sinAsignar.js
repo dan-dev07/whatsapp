@@ -6,6 +6,10 @@ const SinAsignarSchema = Schema({
     required:true,
     unique:true
   },
+  uid:{
+    type:String,
+    require:true,
+  },
   mensajes: [{
     fecha:{
       type:String,

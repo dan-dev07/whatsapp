@@ -58,8 +58,17 @@ const newFecha = () => {
   return formattedDate;
 };
 
+const validarPassword = value => {
+  // Permitir cadena vacía o al menos 5 caracteres
+  if (value === '' || value.length >= 5) {
+      return true;
+  };
+  return false;
+}
+
 module.exports = {
   numeroTelefono,
   rutaDescargaArchivoRecibido,
   newFecha,
+  validarPassword
 }

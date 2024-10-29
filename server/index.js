@@ -49,19 +49,19 @@ io.on('connection', async (socket) => {
     return socket.disconnect();
   };
   console.log('Nuevo cliente conectado:', user);
-  socket.join(user.id);
+  socket.join(user.uid);
 
   //enviar todos los mensajes sin asignar
   socket.emit('mensajes-sinAsignar', await obtenerPendientes());
 
   //enviar los pacientes asignados 
-  socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.email));
+  socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.uid));
 
   //asignar a los pacientes a un usuario
   socket.on('paciente-asignado', async (datos) => {
     await agregarPaciente(datos);
     io.emit('mensajes-sinAsignar', await obtenerPendientes());
-    io.to(datos.id).emit('mis-mensajes', await obtenerPacientesPorUsuario(datos.email));
+    io.to(datos.userUid).emit('mis-mensajes', await obtenerPacientesPorUsuario(datos.userUid));
   });
 
   //conversación actual
@@ -78,62 +78,48 @@ io.on('connection', async (socket) => {
     socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.email));
   });
 
-  socket.on('liberar-paciente', async ({ telefono, email }, callback) => {
-    const pacienteSinAsignar = await quitarUsuario(telefono);
+  socket.on('liberar-paciente', async (data, callback) => {
+    console.log(data);
+    const { telefono, pacienteUid, userUid } = data;
+    const pacienteSinAsignar = await quitarUsuario(telefono, pacienteUid);
     if (pacienteSinAsignar.err) {
       callback(pacienteSinAsignar.err);
+      return ;
     };
     const agregarSinAsignar = await agregarDesdePaciente(pacienteSinAsignar.paciente);
-    if (agregarSinAsignar.err) {
-      callback( agregarSinAsignar.err);
-    };
-    socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(email));
-    io.emit('mensajes-sinAsignar', await obtenerPendientes());
-    callback(agregarSinAsignar);
-  });
-
-  socket.on('liberar-paciente-por-supervisor', async (data, callback) => {
-    const { email, telefono, id } = data;
-    const pacienteSinAsignar = await quitarUsuario(telefono);
-    if (pacienteSinAsignar.err) {
-      callback(pacienteSinAsignar.err);
-    };
-    const agregarSinAsignar = await agregarDesdePaciente(pacienteSinAsignar.paciente);
-    io.to(id).emit('mis-mensajes', await obtenerPacientesPorUsuario(email));
-    io.emit('mensajes-sinAsignar', await obtenerPendientes());
-    callback(agregarSinAsignar);
-  });
-
-  socket.on('reasignar-paciente', async (data,callback) => {
-    const { telefono, nuevoUsuario, anteriorUsuario } = data;
-    const reasignar = await reasignarPaciente(telefono, nuevoUsuario, anteriorUsuario);
-    if (reasignar.ok) {
-      io.to(anteriorUsuario.id).emit('mis-mensajes', await obtenerPacientesPorUsuario(anteriorUsuario.email));
-      io.to(nuevoUsuario.id).emit('mis-mensajes', await obtenerPacientesPorUsuario(nuevoUsuario.email));
-    };
-    callback(reasignar);
-  });
-
-  socket.on('reasignar-paciente-por-supervisor', async (data,callback) => {
-    const { telefono, nuevoUsuario, anteriorUsuario } = data;
-    if (anteriorUsuario.nombre === '' ||
-      anteriorUsuario.email === '' ||
-      anteriorUsuario.id === '') {
-      const reasignar = await reasignarPaciente(telefono, nuevoUsuario);
-      io.to(nuevoUsuario.id).emit('mis-mensajes', await obtenerPacientesPorUsuario(nuevoUsuario.email));
-      io.emit('mensajes-sinAsignar', await obtenerPendientes());
-      callback(reasignar);
+    if (!agregarSinAsignar.ok) {
+      callback(agregarSinAsignar.err);  
+      return ;
     }
+    io.to(userUid).emit('mis-mensajes', await obtenerPacientesPorUsuario(userUid));
+    io.emit('mensajes-sinAsignar', await obtenerPendientes());
+    callback(agregarSinAsignar);
+  });
+
+  socket.on('reasignar-paciente', async (data, callback) => {
+    console.log(data);
+    const { pacienteUid, telefono, nuevoUsuario, anteriorUsuario } = data;
+    if (!anteriorUsuario || anteriorUsuario.nombre === '' || anteriorUsuario.email === '' || anteriorUsuario.uid === '') {
+      const reasignar = await reasignarPaciente(telefono, nuevoUsuario, null, pacienteUid);
+      if (reasignar.ok) {
+        io.to(nuevoUsuario.uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(nuevoUsuario.uid));
+        io.emit('mensajes-sinAsignar', await obtenerPendientes());
+        callback(reasignar);
+        return ;
+      };
+    };
     const reasignar = await reasignarPaciente(telefono, nuevoUsuario, anteriorUsuario);
     if (reasignar.ok) {
-      io.to(anteriorUsuario.id).emit('mis-mensajes', await obtenerPacientesPorUsuario(anteriorUsuario.email));
-      io.to(nuevoUsuario.id).emit('mis-mensajes', await obtenerPacientesPorUsuario(nuevoUsuario.email));
+      io.to(anteriorUsuario.uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(anteriorUsuario.uid));
+      io.to(nuevoUsuario.uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(nuevoUsuario.uid));
+      callback(reasignar);
+      return ;
     };
-    callback( reasignar );
+    callback({err:'No se pudo reasignar el paciente'});
   });
 
   socket.on('cambiar-estado', async (data, callback) => {
-    const res = await actulizarEstado(data.email, data.activo);
+    const res = await actulizarEstado(data.uid, data.activo);
     callback(res);
   });
 

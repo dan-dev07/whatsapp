@@ -10,6 +10,10 @@ const PacienteSchema = new Schema({
     type: String,
     required: false,
   },
+  uid:{
+    type:String,
+    require:true,
+  },
   usuarioAsignado: {
     nombre: {
       type: String,
@@ -21,7 +25,7 @@ const PacienteSchema = new Schema({
       required: true,
       trim:true
     },
-    id:{
+    uid:{
       type:String,
       required:true
     }
@@ -60,13 +64,13 @@ const PacienteSchema = new Schema({
       leido:{
         type:String,
         required:false
-      }
+      },
     }]
 });
 
 PacienteSchema.method('toJSON', function () {
   const { __v, _id, ...object } = this.toObject();
-  // object.id = _id;
+  object.id = _id;
   return object;
 });
 module.exports = model('Paciente', PacienteSchema); 

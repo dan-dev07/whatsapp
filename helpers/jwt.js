@@ -2,8 +2,8 @@ const jwt = require('jsonwebtoken');
 
 const generarJWT = (usuario)=>{
   return new Promise ( (resolve, reject)=>{
-    const {nombre, email, id, rol} = usuario
-    const payload = {nombre, email, id, rol};
+    const {nombre, email, uid, rol} = usuario
+    const payload = {nombre, email, uid, rol};
     jwt.sign(payload, process.env.JWT_KEY, {
       expiresIn:'24h'
     }, (err, token)=>{
@@ -19,8 +19,8 @@ const generarJWT = (usuario)=>{
 
 const comprobarJWT = (token = '') => {
   try {
-    const {nombre, email, id, rol} = jwt.verify(token, process.env.JWT_KEY);
-    return [true, {nombre, email, id, rol}];
+    const {nombre, email, uid, rol} = jwt.verify(token, process.env.JWT_KEY);
+    return [true, {nombre, email, uid, rol}];
   } catch (error) {
     return [false, null];
   }  
