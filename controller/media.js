@@ -62,7 +62,7 @@ const upload = multer({ storage });
 const subirArchivo = async (req, res = express.response) => {
   try {
     const {filename, mimetype, path } = req.file;
-    const {telefono, email, idUser} = req.body;
+    const {telefono, email, uidUser} = req.body;
     const extensiones = ['pdf', 'docx', 'pptx', 'xlsx', 'txt', 'zip', '7zip','doc', 'ppt', 'xls'];
     const ext = filename.split('.').reverse()[0];    
     const {id} = await SetFileWhatsApp(filename, mimetype, telefono, path);
@@ -70,12 +70,12 @@ const subirArchivo = async (req, res = express.response) => {
     
     if (mimetype.includes("image")) {
       const data = SampleImage(telefono, id);
-      req.io.to(idUser).emit('archivo-enviado', await guardarArchivoEnviado(telefono, email, rutaBlobname, 'image'));
+      req.io.to(uidUser).emit('archivo-enviado', await guardarArchivoEnviado(telefono, uidUser, rutaBlobname, 'image'));
       await SendImageWhatsApp(data);
     };
-    if (extensiones.includes(ext)) {
+    if (extensiones.includes(ext) ) {
       const data = SampleDocument(telefono, id, filename);
-      req.io.to(idUser).emit('archivo-enviado', await guardarArchivoEnviado(telefono, email, rutaBlobname, 'document', filename));
+      req.io.to(uidUser).emit('archivo-enviado', await guardarArchivoEnviado(telefono, uidUser, rutaBlobname, 'document', filename));
       await SendDocumentWhatsApp(data);
     };    
     res.send('Archivo recibido');   

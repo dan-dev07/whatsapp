@@ -37,10 +37,10 @@ const obtenerPacientesPorUsuario = async (uid) => {
   };
 };
 
-const guardarMensajeEnviado = async (telefono, email, mensaje) => {
+const guardarMensajeEnviado = async (telefono, uid, mensaje) => {
   try {
     const paciente = await Paciente.findOneAndUpdate(
-      { telefono, 'usuarioAsignado.email': email },
+      { telefono, 'usuarioAsignado.uid': uid },
       { $push: { chats: mensaje } },
       { new: true });
     const ultimo = paciente.chats[paciente.chats.length - 1];
@@ -51,7 +51,7 @@ const guardarMensajeEnviado = async (telefono, email, mensaje) => {
   };
 };
 
-const guardarArchivoEnviado = async (telefono, email, urlDocumento, tipo, filename) => {
+const guardarArchivoEnviado = async (telefono, uid, urlDocumento, tipo, filename) => {
   try {
     const fecha = newFecha();
     const mensaje = {
@@ -64,7 +64,7 @@ const guardarArchivoEnviado = async (telefono, email, urlDocumento, tipo, filena
       leido: false,
     }
     const paciente = await Paciente.findOneAndUpdate(
-      { telefono, 'usuarioAsignado.email': email },
+      { telefono, 'usuarioAsignado.uid': uid },
       { $push: { chats: mensaje } },
       { new: true });
     const ultimo = paciente.chats[paciente.chats.length - 1];
@@ -76,9 +76,9 @@ const guardarArchivoEnviado = async (telefono, email, urlDocumento, tipo, filena
 }
 
 
-const obtenerConversacionActual = async (telefono, email) => {
+const obtenerConversacionActual = async (telefono, uid) => {
   try {
-    const pacienteActual = await Paciente.findOne({ telefono, 'usuarioAsignado.email': email });
+    const pacienteActual = await Paciente.findOne({ telefono, 'usuarioAsignado.uid': uid });
 
     const { chats } = pacienteActual;
     const mensajesLeidos = chats.map(c => {
@@ -87,15 +87,15 @@ const obtenerConversacionActual = async (telefono, email) => {
       };
       return c;
     });
-    const pacienteActualizado = await Paciente.findOneAndUpdate({ telefono, 'usuarioAsignado.email': email }, { chats: mensajesLeidos }, { new: true });
+    const pacienteActualizado = await Paciente.findOneAndUpdate({ telefono, 'usuarioAsignado.uid': uid }, { chats: mensajesLeidos }, { new: true });
     const { chats: chatsAct } = pacienteActualizado;
 
     return chatsAct;
   } catch (error) {
     console.log(error);
     return { err: 'No se pudo cargar las conversaciones' };
-  }
-}
+  };
+};
 
 const buscarNumeroExistente = async (telefono) => {
   try {
@@ -131,20 +131,27 @@ const quitarUsuario = async (telefono, uid) => {
 
 const reasignarPaciente = async (telefono, nuevoUsuario, anteriorUsuario, pacienteUid) => {
   try {
-    if (!anteriorUsuario) {
-      const usuario = await Usuario.findOne({ uid: nuevoUsuario.uid });
-      if (!usuario) {
-        return { ok: false };
-      }
-      const { nombre, email} = usuario;
-      const nuevoPaciente = await agregarPaciente({ telefono, nombre, email, userUid:usuario.uid, pacienteUid, ultimaComunicacion: '' }, {new:true});
+    if (!anteriorUsuario || anteriorUsuario.nombre === '' || anteriorUsuario.email === '' || anteriorUsuario.uid === '') {
+      const nuevoPaciente = await agregarPaciente({ 
+        telefono, 
+        nombre:nuevoUsuario.nombre,
+        email:nuevoUsuario.email,
+        userUid:nuevoUsuario.uid,
+        pacienteUid, 
+        ultimaComunicacion: '' 
+      });
       if (!nuevoPaciente) {
         return { ok: false };  
-      }
+      };
+      console.log('paciente asignado');
       return { ok: true };
-    }
-
-    const pacienteActualizado = await Paciente.findOneAndUpdate({ telefono, 'usuarioAsignado.uid': anteriorUsuario.uid }, { usuarioAsignado: nuevoUsuario }, { new: true });
+    };
+    const pacienteActualizado = await Paciente.findOneAndUpdate(
+      { telefono, 'usuarioAsignado.uid': anteriorUsuario.uid },
+      { usuarioAsignado: nuevoUsuario }, 
+      { new: true }
+    );
+    console.log('paciente reasignado');
     if (!pacienteActualizado) {
       return { ok: false };
     }

@@ -64,22 +64,15 @@ io.on('connection', async (socket) => {
     io.to(datos.userUid).emit('mis-mensajes', await obtenerPacientesPorUsuario(datos.userUid));
   });
 
-  //conversación actual
-  socket.on('conversacion-actual', async ({ email, telefono, id }, callback) => {
-    const msgs = await obtenerConversacionActual(telefono, email);
-    callback(msgs);
-  });
-
   socket.on('mensaje-enviado', async (data, callback) => {
     const { telefono, emisor, fecha, leido, mensaje, user, tipo } = data;
-    const ultimo = await guardarMensajeEnviado(telefono, user.email, { emisor, fecha, leido, mensaje, tipo });
+    const ultimo = await guardarMensajeEnviado(telefono, user.uid, { emisor, fecha, leido, mensaje, tipo });
     callback(ultimo);
     SendMessageWhatsApp(mensaje, telefono);
-    socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.email));
+    socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.uid));
   });
 
   socket.on('liberar-paciente', async (data, callback) => {
-    console.log(data);
     const { telefono, pacienteUid, userUid } = data;
     const pacienteSinAsignar = await quitarUsuario(telefono, pacienteUid);
     if (pacienteSinAsignar.err) {
@@ -100,6 +93,7 @@ io.on('connection', async (socket) => {
     console.log(data);
     const { pacienteUid, telefono, nuevoUsuario, anteriorUsuario } = data;
     if (!anteriorUsuario || anteriorUsuario.nombre === '' || anteriorUsuario.email === '' || anteriorUsuario.uid === '') {
+      console.log('asignar nuevo');
       const reasignar = await reasignarPaciente(telefono, nuevoUsuario, null, pacienteUid);
       if (reasignar.ok) {
         io.to(nuevoUsuario.uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(nuevoUsuario.uid));
@@ -108,7 +102,8 @@ io.on('connection', async (socket) => {
         return ;
       };
     };
-    const reasignar = await reasignarPaciente(telefono, nuevoUsuario, anteriorUsuario);
+    console.log('reasignar');
+    const reasignar = await reasignarPaciente(telefono, nuevoUsuario, anteriorUsuario, pacienteUid);
     if (reasignar.ok) {
       io.to(anteriorUsuario.uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(anteriorUsuario.uid));
       io.to(nuevoUsuario.uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(nuevoUsuario.uid));

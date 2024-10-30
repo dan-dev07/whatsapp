@@ -35,9 +35,9 @@ const Whatsapp = async (req, res = response) => {
           }
         } else {
           const mensaje = await GuardarMensajeRecibido(text, number, type);
-          const { ultimoMsg, id } = mensaje;
-          req.io.to(id).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
-          req.io.to(id).emit('mis-mensajes', await obtenerPacientesPorUsuario(resExistente.usuarioAsignado.email));
+          const { ultimoMsg, uid } = mensaje;
+          req.io.to(uid).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
+          req.io.to(uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(resExistente.usuarioAsignado.uid));
         };
       };
       if (type === 'image') {
@@ -53,9 +53,9 @@ const Whatsapp = async (req, res = response) => {
         }
         else {
           const mensaje = await GuardarMensajeRecibido('Imagen Recibido',number, type, ruta);
-          const { ultimoMsg, id } = mensaje;
-          req. io.to(id).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
-          req.io.to(id).emit('mis-mensajes', await obtenerPacientesPorUsuario(resExistente.usuarioAsignado.email));
+          const { ultimoMsg, uid } = mensaje;
+          req. io.to(uid).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
+          req.io.to(uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(resExistente.usuarioAsignado.uid));
         };
       }
       if (type === 'document') {
@@ -71,12 +71,9 @@ const Whatsapp = async (req, res = response) => {
         }
         else {
           const mensaje = await GuardarMensajeRecibido('Documento Recibido',number, type, ruta, filename);
-          const { ultimoMsg, id } = mensaje;
-          req.io.to(id).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
-          req.io.to(id).emit('mis-mensajes', await obtenerPacientesPorUsuario(resExistente.usuarioAsignado.email));
-
-          // const data = SampleDocument(number, documentId, filename);
-          // SendDocumentWhatsApp(data);
+          const { ultimoMsg, uid } = mensaje;
+          req.io.to(uid).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
+          req.io.to(uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(resExistente.usuarioAsignado.uid));
         };
       };
     };
@@ -234,11 +231,11 @@ const GuardarMensajeRecibido = async (texto, telefono, tipo, urlDocumento, filen
       { $push: { chats: mensaje } },
       { new: true });
     const ultimoMsg = paciente.chats[paciente.chats.length - 1];
-    const { id } = paciente.usuarioAsignado;
+    const { uid } = paciente.usuarioAsignado;
     return { 
       ok:true,
       ultimoMsg, 
-      id
+      uid
     };
   } catch (error) {
     return MensajeError('No se pudo guardar el mensaje', error);

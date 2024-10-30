@@ -35,10 +35,11 @@ const allMessages = async (req, res = response) => {
           nombre:usuarioAsignado.nombre,
           email:usuarioAsignado.email,
           uid:usuarioAsignado.uid
-        }
-      }
+        },
+      };
     });
     const mensajes = [...arregloPendientes, ...arregloPacientes];
+    console.log('Enviado');
     res.send(mensajes);
   } catch (error) {
     console.log(error);
@@ -48,7 +49,30 @@ const allMessages = async (req, res = response) => {
   };
 };
 
+const getChat = async (req, res = response)=>{
+  try {
+    const {telefono, uid} = req.body;
+    const pacienteActual = await Paciente.findOne({ telefono, 'usuarioAsignado.uid': uid });
+    const { chats } = pacienteActual;
+    const mensajesLeidos = chats.map(c => {
+      if (c.emisor === 'Paciente') {
+        c.leido = true;
+      };
+      return c;
+    });
+    const pacienteActualizado = await Paciente.findOneAndUpdate({ telefono, 'usuarioAsignado.uid': uid }, { chats: mensajesLeidos }, { new: true });
+    const { chats: chatsAct } = pacienteActualizado;
 
+    console.log('Enviado');
+    res.send( chatsAct );
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      response: 'No se pudo cargar la conversación'
+    });
+  };
+};
 module.exports = {
   allMessages,
+  getChat,
 }
