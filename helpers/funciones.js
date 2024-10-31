@@ -60,7 +60,7 @@ const newFecha = () => {
 
 const validarPassword = value => {
   // Permitir cadena vacía o al menos 5 caracteres
-  if (value === '' || value.length >= 5) {
+  if (value === '' || value.length >= 1 ) {
       return true;
   };
   return false;

@@ -6,7 +6,6 @@ const allMessages = async (req, res = response) => {
   try {
     const mensajesPacientes = await Paciente.find();
     const pendientes = await SinAsignar.find();
-
     const arregloPendientes = pendientes.map(m => {
       const { mensajes } = m;
       const ultimo = mensajes[mensajes.length - 1];

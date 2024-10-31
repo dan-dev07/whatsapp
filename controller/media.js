@@ -72,8 +72,7 @@ const subirArchivo = async (req, res = express.response) => {
       const data = SampleImage(telefono, id);
       req.io.to(uidUser).emit('archivo-enviado', await guardarArchivoEnviado(telefono, uidUser, rutaBlobname, 'image'));
       await SendImageWhatsApp(data);
-    };
-    if (extensiones.includes(ext) ) {
+    }else {
       const data = SampleDocument(telefono, id, filename);
       req.io.to(uidUser).emit('archivo-enviado', await guardarArchivoEnviado(telefono, uidUser, rutaBlobname, 'document', filename));
       await SendDocumentWhatsApp(data);
