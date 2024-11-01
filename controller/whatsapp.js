@@ -1,12 +1,12 @@
 const { response } = require('express');
-require('dotenv').config();
-const https = require('https');
-const Paciente = require('../models/paciente');
 const axios = require('axios');
+const https = require('https');
 const path = require('path');
-const { MensajeError } = require('../helpers/error');
 const FormData = require('form-data');
+require('dotenv').config();
 const fs = require('fs');
+const Paciente = require('../models/paciente');
+const { MensajeError } = require('../helpers/error');
 const { urlMeta } = require('../cons/urls');
 const { optionsMessage } = require('../cons/optionsMessage');
 const { numeroTelefono, rutaDescargaArchivoRecibido, newFecha } = require('../helpers/funciones');
@@ -50,8 +50,7 @@ const Whatsapp = async (req, res = response) => {
           if (!respPendientes.err) {
             req.io.emit('mensajes-sinAsignar', await obtenerPendientes());
           }
-        }
-        else {
+        } else {
           const mensaje = await GuardarMensajeRecibido('Imagen Recibido',number, type, ruta);
           const { ultimoMsg, uid } = mensaje;
           req. io.to(uid).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
@@ -67,9 +66,8 @@ const Whatsapp = async (req, res = response) => {
           const respPendientes = await agregarPendiente('Documento Recibido',number, type, ruta, filename);
           if (!respPendientes.err) {
             req.io.sockets.emit('mensajes-sinAsignar', await obtenerPendientes());
-          }
-        }
-        else {
+          };
+        } else {
           const mensaje = await GuardarMensajeRecibido('Documento Recibido',number, type, ruta, filename);
           const { ultimoMsg, uid } = mensaje;
           req.io.to(uid).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });

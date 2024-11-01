@@ -5,12 +5,13 @@ const { newFecha } = require('../helpers/funciones');
 
 const agregarPaciente = async (datos) => {
   try {
+    console.log('agregarPaciente',datos);
     const { nombrePaciente = 'Pruebas', telefono, nombre, email, userUid, pacienteUid, ultimaComunicacion } = datos;
     const user = { nombre, email, uid:userUid };
     const pendiente = await SinAsignar.findOne({ telefono, uid:pacienteUid });
     const chats = pendiente.mensajes;
-    const paciente = await Paciente({ nombrePaciente, telefono, uid:pacienteUid, usuarioAsignado: user, ultimaComunicacion, chats: chats });
-    paciente.save();
+    const paciente = await Paciente.create({ nombrePaciente, telefono, uid:pacienteUid, usuarioAsignado: user, ultimaComunicacion, chats: chats });
+    // await paciente.save();
     await SinAsignar.findOneAndDelete({ telefono });
     console.log('Paciente agregado');
     return ({

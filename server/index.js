@@ -58,10 +58,13 @@ io.on('connection', async (socket) => {
   socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.uid));
 
   //asignar a los pacientes a un usuario
-  socket.on('paciente-asignado', async (datos) => {
-    await agregarPaciente(datos);
-    io.emit('mensajes-sinAsignar', await obtenerPendientes());
-    io.to(datos.userUid).emit('mis-mensajes', await obtenerPacientesPorUsuario(datos.userUid));
+  socket.on('paciente-asignado', async (datos, callback) => {
+    const paciente = await agregarPaciente(datos);
+    if (!paciente.err) {
+      io.emit('mensajes-sinAsignar', await obtenerPendientes());
+      io.to(datos.userUid).emit('mis-mensajes', await obtenerPacientesPorUsuario(datos.userUid));
+    };
+    callback(paciente);
   });
 
   socket.on('mensaje-enviado', async (data, callback) => {
