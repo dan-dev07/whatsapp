@@ -66,6 +66,7 @@ const subirArchivo = async (req, res = express.response) => {
     const extensiones = ['pdf', 'docx', 'pptx', 'xlsx', 'txt', 'zip', '7zip','doc', 'ppt', 'xls'];
     const ext = filename.split('.').reverse()[0];    
     const {id} = await SetFileWhatsApp(filename, mimetype, telefono, path);
+    console.log(id);
     const rutaBlobname = await cargarArchivo(filename, mimetype, telefono);
     
     if (mimetype.includes("image")) {

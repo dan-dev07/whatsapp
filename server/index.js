@@ -68,6 +68,7 @@ io.on('connection', async (socket) => {
   });
 
   socket.on('mensaje-enviado', async (data, callback) => {
+    console.log(data);
     const { telefono, emisor, fecha, leido, mensaje, user, tipo } = data;
     const ultimo = await guardarMensajeEnviado(telefono, user.uid, { emisor, fecha, leido, mensaje, tipo });
     callback(ultimo);
