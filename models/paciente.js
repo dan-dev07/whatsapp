@@ -9,10 +9,12 @@ const PacienteSchema = new Schema({
   telefono: {
     type: String,
     required: false,
+    unique:true
   },
   uid:{
     type:String,
     require:true,
+    unique:true
   },
   usuarioAsignado: {
     nombre: {
@@ -23,11 +25,12 @@ const PacienteSchema = new Schema({
     email: {
       type: String,
       required: true,
-      trim:true
+      trim:true,
     },
     uid:{
       type:String,
-      required:true
+      required:true,
+      unique:true
     }
   },
   ultimaComunicacion: {

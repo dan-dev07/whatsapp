@@ -9,6 +9,7 @@ const SinAsignarSchema = Schema({
   uid:{
     type:String,
     require:true,
+    unique:true
   },
   mensajes: [{
     fecha:{

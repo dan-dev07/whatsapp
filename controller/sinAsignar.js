@@ -37,17 +37,6 @@ const obtenerPendientes = async () => {
 
 const agregarPendiente = async (mensaje, telefono, tipo, urlDocumento, filename, emisor='Paciente')=>{
   try {
-    //
-    // Encriptar
-    const encryptedData = CryptoJS.AES.encrypt(mensaje, process.env.CRYPTOJS_KEY).toString();
-    // console.log(encryptedData);
-
-    // Desencriptar
-    const bytes = CryptoJS.AES.decrypt(encryptedData, process.env.CRYPTOJS_KEY);
-    const originalData = bytes.toString(CryptoJS.enc.Utf8);
-    // console.log(originalData);
-    //
-
     const fecha = newFecha();
     const uid = uuidv4();
     const mensajes = { fecha, emisor, tipo, urlDocumento, filename, mensaje};

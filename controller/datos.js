@@ -15,7 +15,7 @@ const allMessages = async (req, res = response) => {
         fecha: ultimo.fecha,
         usuario:{
           nombre:'', 
-          email:'', 
+          // email:'', 
           uid:''
         }
       }
@@ -32,7 +32,7 @@ const allMessages = async (req, res = response) => {
         fecha,
         usuario: {
           nombre:usuarioAsignado.nombre,
-          email:usuarioAsignado.email,
+          // email:usuarioAsignado.email,
           uid:usuarioAsignado.uid
         },
       };

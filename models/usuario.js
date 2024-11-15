@@ -9,7 +9,7 @@ const UsuarioSchema = Schema({
   email:{
     type:String,
     required:true,
-    uniquie:true,
+    unique:true,
     trim:true
   },
   password:{
@@ -28,7 +28,8 @@ const UsuarioSchema = Schema({
   },
   uid:{
     type:String,
-    require:true
+    require:true,
+    unique:true
   }
 });
 

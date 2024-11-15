@@ -6,11 +6,11 @@ const { newFecha } = require('../helpers/funciones');
 const agregarPaciente = async (datos) => {
   try {
     console.log('agregarPaciente',datos);
-    const { nombrePaciente = 'Pruebas', telefono, nombre, email, userUid, pacienteUid, ultimaComunicacion } = datos;
-    const user = { nombre, email, uid:userUid };
+    const { telefono, userUid, pacienteUid, ultimaComunicacion } = datos;
+    const user = await Usuario.findOne({uid:userUid})
     const pendiente = await SinAsignar.findOne({ telefono, uid:pacienteUid });
     const chats = pendiente.mensajes;
-    const paciente = await Paciente.create({ nombrePaciente, telefono, uid:pacienteUid, usuarioAsignado: user, ultimaComunicacion, chats: chats });
+    const paciente = await Paciente.create({ nombrePaciente:pendiente.nombrePaciente, telefono, uid:pacienteUid, usuarioAsignado: user, ultimaComunicacion, chats: chats });
     // await paciente.save();
     await SinAsignar.findOneAndDelete({ telefono });
     console.log('Paciente agregado');
@@ -132,11 +132,10 @@ const quitarUsuario = async (telefono, uid) => {
 
 const reasignarPaciente = async (telefono, nuevoUsuario, anteriorUsuario, pacienteUid) => {
   try {
-    if (!anteriorUsuario || anteriorUsuario.nombre === '' || anteriorUsuario.email === '' || anteriorUsuario.uid === '') {
+    // if (!anteriorUsuario || anteriorUsuario.nombre === '' || anteriorUsuario.email === '' || anteriorUsuario.uid === '') {
+    if (!anteriorUsuario || anteriorUsuario.uid === '' || anteriorUsuario.uid === null) {
       const nuevoPaciente = await agregarPaciente({ 
-        telefono, 
-        nombre:nuevoUsuario.nombre,
-        email:nuevoUsuario.email,
+        telefono,
         userUid:nuevoUsuario.uid,
         pacienteUid, 
         ultimaComunicacion: '' 
@@ -147,9 +146,11 @@ const reasignarPaciente = async (telefono, nuevoUsuario, anteriorUsuario, pacien
       console.log('paciente asignado');
       return { ok: true };
     };
+    console.log(telefono, nuevoUsuario, anteriorUsuario, pacienteUid);
+    const user = await Usuario.findOne({uid:nuevoUsuario.uid});
     const pacienteActualizado = await Paciente.findOneAndUpdate(
-      { telefono, 'usuarioAsignado.uid': anteriorUsuario.uid },
-      { usuarioAsignado: nuevoUsuario }, 
+      { telefono, uid:pacienteUid },
+      { usuarioAsignado: user }, 
       { new: true }
     );
     console.log('paciente reasignado');

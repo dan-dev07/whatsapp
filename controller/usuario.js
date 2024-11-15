@@ -115,9 +115,9 @@ const operadorUsuario = async (req, res=express.response)=>{
     const operador = usuarios.filter(a => (a.rol.includes("Operador")) && (a.activo === true));
     let aux = operador.map(o => {
       return {
-        value: o.email,
+        value: o.uid,
         label: o.nombre,
-        uid: o.uid
+        // uid: o.uid
       }
     });
     res.send(aux);

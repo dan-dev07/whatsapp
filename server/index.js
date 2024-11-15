@@ -48,7 +48,7 @@ io.on('connection', async (socket) => {
     console.log('socket no identificado');
     return socket.disconnect();
   };
-  console.log('Nuevo cliente conectado:', user);
+  console.log('Nuevo cliente conectado:', user.nombre);
   socket.join(user.uid);
 
   //enviar todos los mensajes sin asignar
@@ -87,13 +87,12 @@ io.on('connection', async (socket) => {
       callback(agregarSinAsignar.err);  
       return ;
     }
+    callback(agregarSinAsignar);
     io.to(userUid).emit('mis-mensajes', await obtenerPacientesPorUsuario(userUid));
     io.emit('mensajes-sinAsignar', await obtenerPendientes());
-    callback(agregarSinAsignar);
   });
 
   socket.on('reasignar-paciente', async (data, callback) => {
-    console.log(data);
     const { pacienteUid, telefono, nuevoUsuario, anteriorUsuario } = data;
     if (!anteriorUsuario || anteriorUsuario.nombre === '' || anteriorUsuario.email === '' || anteriorUsuario.uid === '') {
       console.log('asignar nuevo');
@@ -102,14 +101,15 @@ io.on('connection', async (socket) => {
         io.to(nuevoUsuario.uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(nuevoUsuario.uid));
         io.emit('mensajes-sinAsignar', await obtenerPendientes());
         callback(reasignar);
+        console.log('reasignar');
         return ;
       };
     };
-    console.log('reasignar');
     const reasignar = await reasignarPaciente(telefono, nuevoUsuario, anteriorUsuario, pacienteUid);
     if (reasignar.ok) {
       io.to(anteriorUsuario.uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(anteriorUsuario.uid));
       io.to(nuevoUsuario.uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(nuevoUsuario.uid));
+      console.log('reasignar');
       callback(reasignar);
       return ;
     };
