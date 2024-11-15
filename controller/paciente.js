@@ -5,7 +5,7 @@ const { newFecha } = require('../helpers/funciones');
 
 const agregarPaciente = async (datos) => {
   try {
-    console.log('agregarPaciente',datos);
+    console.log('agregarPaciente');
     const { telefono, userUid, pacienteUid, ultimaComunicacion } = datos;
     const user = await Usuario.findOne({uid:userUid})
     const pendiente = await SinAsignar.findOne({ telefono, uid:pacienteUid });
@@ -146,7 +146,6 @@ const reasignarPaciente = async (telefono, nuevoUsuario, anteriorUsuario, pacien
       console.log('paciente asignado');
       return { ok: true };
     };
-    console.log(telefono, nuevoUsuario, anteriorUsuario, pacienteUid);
     const user = await Usuario.findOne({uid:nuevoUsuario.uid});
     const pacienteActualizado = await Paciente.findOneAndUpdate(
       { telefono, uid:pacienteUid },
