@@ -16,7 +16,6 @@ const cargarArchivo =async(buffer, telefono, id, tipo, filename)=>{
     }else if (tipo === 'document') {
       blobName = `${telefono}/${filename}`;
     };
-    console.log(blobName);
     // Crear un cliente de servicio de blob
     const blobServiceClient = BlobServiceClient.fromConnectionString(AZURE_STORAGE_CONNECTION_STRING);
   
