@@ -85,7 +85,7 @@ const Whatsapp = async (req, res = response) => {
 
 const VerifyToken = (req, res = response) => {
   try {
-    const accessToken = "RUATOUAOSNRUAO";
+    const accessToken = process.env.ACCESS_TOKEN_WHATSAPP;
     const token = req.query["hub.verify_token"];
     const challenge = req.query["hub.challenge"];
 
