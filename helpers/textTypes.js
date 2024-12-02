@@ -1,4 +1,4 @@
-const SampleText =()=>{
+const SampleText =(number, textResponse)=>{
   const data = JSON.stringify({
     "messaging_product": "whatsapp",
     "recipient_type": "individual",

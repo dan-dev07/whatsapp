@@ -12,6 +12,7 @@ const { optionsMessage } = require('../cons/optionsMessage');
 const { numeroTelefono, rutaDescargaArchivoRecibido, newFecha } = require('../helpers/funciones');
 const { buscarNumeroExistente, obtenerPacientesPorUsuario } = require('./paciente');
 const { agregarPendiente, obtenerPendientes } = require('./sinAsignar');
+const { SampleText } = require('../helpers/textTypes');
 
 const Whatsapp = async (req, res = response) => {
 
@@ -53,7 +54,7 @@ const Whatsapp = async (req, res = response) => {
         } else {
           const mensaje = await GuardarMensajeRecibido('Imagen Recibido',number, type, ruta);
           const { ultimoMsg, uid } = mensaje;
-          req. io.to(uid).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
+          req.io.to(uid).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
           req.io.to(uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(resExistente.usuarioAsignado.uid));
         };
       }
@@ -103,16 +104,8 @@ const SendMessageWhatsApp = (textResponse, number = '525546841338') => {
 
   try {
     //guardar información para el envio de datos a facebook
-    const data = JSON.stringify({
-      "messaging_product": "whatsapp",
-      "recipient_type": "individual",
-      "to": number,
-      "type": "text",
-      "text": {
-        "body": textResponse
-      }
-    });
-    const options = optionsMessage(textResponse);
+    const data = SampleText(number, textResponse);
+    const options = optionsMessage(data);
   
     //enviar datos a facebook para reenviar mensaje al numero de teléfono
     const req = https.request(options, res => {

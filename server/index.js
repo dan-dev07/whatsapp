@@ -40,7 +40,7 @@ app.use('/api/Login', require('../router/auth'));
 app.use('/api/Usuarios', require('../router/usuarios'));
 app.use('/api/whatsapp', require('../router/whatsapp'));
 app.use('/api/datos', require('../router/datos'));
-
+app.use('/api/Version', require('..router/version'));
 //io
 io.on('connection', async (socket) => {
   const [valido, user] = comprobarJWT(socket.handshake.query['auth']);
