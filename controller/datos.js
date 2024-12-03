@@ -1,6 +1,7 @@
 const { response } = require('express');
 const Paciente = require('../models/paciente');
 const SinAsignar = require('../models/sinAsignar');
+const { obtenerPacientesPorUsuario } = require('./paciente');
 
 const allMessages = async (req, res = response) => {
   try {
@@ -63,6 +64,7 @@ const getChat = async (req, res = response)=>{
     const { chats: chatsAct } = pacienteActualizado;
 
     console.log('Enviado');
+    req.io.to(uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(uid));
     res.send( chatsAct );
   } catch (error) {
     console.log(error);
