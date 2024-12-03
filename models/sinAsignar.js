@@ -4,7 +4,8 @@ const SinAsignarSchema = Schema({
   telefono: {
     type:String,
     required:true,
-    unique:true
+    unique:true,
+    index:true
   },
   uid:{
     type:String,

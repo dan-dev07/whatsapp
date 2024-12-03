@@ -30,7 +30,6 @@ const PacienteSchema = new Schema({
     uid:{
       type:String,
       required:true,
-      unique:true
     }
   },
   ultimaComunicacion: {
