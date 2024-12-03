@@ -29,7 +29,8 @@ const UsuarioSchema = Schema({
   uid:{
     type:String,
     require:true,
-    unique:true
+    unique:true,
+    index:true
   }
 });
 

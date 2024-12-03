@@ -28,8 +28,8 @@ const obtenerPacientesPorUsuario = async (uid) => {
     const pacientesPorUsuario = (await Paciente.find({ 'usuarioAsignado.uid': uid })).map(p => {
       const { nombrePaciente, telefono, chats, uid } = p;
       const ultimoMsg = chats[chats.length - 1];  
-      const { fecha, mensaje, leido, tipo } = ultimoMsg;
-      return { nombrePaciente, telefono, uid, fecha, mensaje, leido, tipo };
+      const { fecha, mensaje, leido, tipo, emisor } = ultimoMsg;
+      return { nombrePaciente, telefono, uid, fecha, mensaje, leido, tipo, emisor };
     });
     return pacientesPorUsuario.sort((a, b) => a.leido - b.leido);
   } catch (error) {

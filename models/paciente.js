@@ -65,7 +65,7 @@ const PacienteSchema = new Schema({
         trim:true
       },
       leido:{
-        type:String,
+        type:Boolean,
         required:false
       },
     }]
