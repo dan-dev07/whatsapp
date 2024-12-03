@@ -62,7 +62,6 @@ const getChat = async (req, res = response)=>{
     });
     const pacienteActualizado = await Paciente.findOneAndUpdate({ telefono, 'usuarioAsignado.uid': uid }, { chats: mensajesLeidos }, { new: true });
     const { chats: chatsAct } = pacienteActualizado;
-
     console.log('Enviado');
     req.io.to(uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(uid));
     res.send( chatsAct );

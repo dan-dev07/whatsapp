@@ -30,7 +30,6 @@ const UsuarioSchema = Schema({
     type:String,
     require:true,
     unique:true,
-    index:true
   }
 });
 
