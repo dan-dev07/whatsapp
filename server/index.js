@@ -9,13 +9,12 @@ const { obtenerPacientesPorUsuario, agregarPaciente, obtenerConversacionActual, 
 const { SendMessageWhatsApp } = require('../controller/whatsapp');
 const { actulizarEstado } = require('../controller/usuario');
 
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 const server = require('http').createServer(app);
 const io = socketio(server, {
   cors: {
-    origin: ['http://localhost:5173', '172.30.96.1:5173', '192.168.16.78:5173', 'https://phenomenal-dodol-9387b3.netlify.app'],
+    origin: [process.env.CORS_OPC],
     credentials: true,
   }
 });
@@ -95,13 +94,13 @@ io.on('connection', async (socket) => {
   socket.on('reasignar-paciente', async (data, callback) => {
     const { pacienteUid, telefono, nuevoUsuario, anteriorUsuario } = data;
     if (!anteriorUsuario || anteriorUsuario.nombre === '' || anteriorUsuario.email === '' || anteriorUsuario.uid === '') {
-      console.log('asignar nuevo');
+      // console.log('asignar nuevo');
       const reasignar = await reasignarPaciente(telefono, nuevoUsuario, null, pacienteUid);
       if (reasignar.ok) {
         io.to(nuevoUsuario.uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(nuevoUsuario.uid));
         io.emit('mensajes-sinAsignar', await obtenerPendientes());
         callback(reasignar);
-        console.log('reasignar');
+        // console.log('reasignar');
         return ;
       };
     };
@@ -109,7 +108,7 @@ io.on('connection', async (socket) => {
     if (reasignar.ok) {
       io.to(anteriorUsuario.uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(anteriorUsuario.uid));
       io.to(nuevoUsuario.uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(nuevoUsuario.uid));
-      console.log('reasignar');
+      // console.log('reasignar');
       callback(reasignar);
       return ;
     };

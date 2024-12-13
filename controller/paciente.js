@@ -5,7 +5,7 @@ const { newFecha } = require('../helpers/funciones');
 
 const agregarPaciente = async (datos) => {
   try {
-    console.log('agregarPaciente');
+    // console.log('agregarPaciente');
     const { telefono, userUid, pacienteUid, ultimaComunicacion } = datos;
     const user = await Usuario.findOne({uid:userUid})
     const pendiente = await SinAsignar.findOne({ telefono, uid:pacienteUid });
@@ -13,7 +13,7 @@ const agregarPaciente = async (datos) => {
     const paciente = await Paciente.create({ nombrePaciente:pendiente.nombrePaciente, telefono, uid:pacienteUid, usuarioAsignado: user, ultimaComunicacion, chats: chats });
     // await paciente.save();
     await SinAsignar.findOneAndDelete({ telefono });
-    console.log('Paciente agregado');
+    // console.log('Paciente agregado');
     return ({
       paciente
     });
@@ -143,7 +143,7 @@ const reasignarPaciente = async (telefono, nuevoUsuario, anteriorUsuario, pacien
       if (!nuevoPaciente) {
         return { ok: false };  
       };
-      console.log('paciente asignado');
+      // console.log('paciente asignado');
       return { ok: true };
     };
     const user = await Usuario.findOne({uid:nuevoUsuario.uid});
@@ -152,7 +152,7 @@ const reasignarPaciente = async (telefono, nuevoUsuario, anteriorUsuario, pacien
       { usuarioAsignado: user }, 
       { new: true }
     );
-    console.log('paciente reasignado');
+    // console.log('paciente reasignado');
     if (!pacienteActualizado) {
       return { ok: false };
     }

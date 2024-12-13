@@ -51,7 +51,7 @@ const agregarPendiente = async (mensaje, telefono, tipo, urlDocumento, filename,
       { $push: { mensajes } },
       { new: true }
     );
-    console.log('Pendiente actualizado');
+    // console.log('Pendiente actualizado');
 
     return {ok:true};
   } catch (error) {
@@ -67,7 +67,7 @@ const agregarDesdePaciente =async (paciente)=>{
     const {chats, telefono, uid} = paciente;
     const nuevoPendiente = await SinAsignar({telefono, uid, mensajes:chats});
     nuevoPendiente.save();
-    console.log('Paciente reasignado a Pendientes');
+    // console.log('Paciente reasignado a Pendientes');
     if (!nuevoPendiente) {
       return {ok:false};
     };

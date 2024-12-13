@@ -6,7 +6,6 @@ const { generarJWT, comprobarJWT } = require('../helpers/jwt');
 const ingresar = async (req, res = response) => {
   try {
     const { email, password } = req.body;
-    
     //Verificar si el usuario existe 
     const usuarioDB = await Usuario.findOne({ email });
     if (!usuarioDB) {

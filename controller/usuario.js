@@ -61,7 +61,7 @@ const actualizarUsuario =async (req, res = response) => {
     //Actualizar usuario
     const actUsuario = await Usuario.findOneAndUpdate({uid}, usuario, {new:true});
     if (actUsuario) {
-      console.log('usuario actualizado');
+      // console.log('usuario actualizado');
       return res.json({
         actualizado:true,
         nombre:actUsuario.nombre
