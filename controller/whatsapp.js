@@ -15,7 +15,7 @@ const { agregarPendiente, obtenerPendientes } = require('./sinAsignar');
 const { SampleText } = require('../helpers/textTypes');
 
 const Whatsapp = async (req, res = response) => {
-
+  console.log(req.body);
   try {
     const entry = req.body['entry'][0];
     const changes = entry['changes'][0];
