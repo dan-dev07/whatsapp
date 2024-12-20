@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3000;
 const server = require('http').createServer(app);
 const io = socketio(server, {
   cors: {
-    origin: [process.env.CORS_OPC],
+    origin: ['189.131.182.61:5173'],
     credentials: true,
   }
 });
@@ -39,7 +39,7 @@ app.use('/api/Login', require('../router/auth'));
 app.use('/api/Usuarios', require('../router/usuarios'));
 app.use('/api/whatsapp', require('../router/whatsapp'));
 app.use('/api/datos', require('../router/datos'));
-app.use('/api/Version', require('../router/version'));
+app.use('/api/ver', require('../router/version'));
 //io
 io.on('connection', async (socket) => {
   const [valido, user] = comprobarJWT(socket.handshake.query['auth']);
