@@ -1,3 +1,4 @@
+const dayjs = require('dayjs');
 const { obtenerDescarga, guardarArchivo } = require('./manejoArchivosPacientes/obtenerArchivo');
 
 const numeroTelefono = (messages) => {
@@ -99,7 +100,7 @@ const mostrarDatosEntradaWhatsapp = (data) => {
         result.push({
           from: message.from,
           messageId: message.id,
-          timestamp: new Date(parseInt(message.Timestamp) * 1000).toISOString(), // Convertir timestamp a fecha
+          timestamp: dayjs(message.Timestamp).format('DD/MM/YYYY'),// Convertir timestamp a fecha
           type: message.type,
           textBody: message.text.body
         });
