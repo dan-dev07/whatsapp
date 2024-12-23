@@ -17,9 +17,11 @@ const rutaDescargaArchivoRecibido = async (messages, telefono, tipo) => {
   } else if (tipo === 'document') {
     id = messages['document']['id'];
     filename = messages['document']['filename'];
-  };
+  } else if (tipo === 'audio') {
+    id = messages['audio']['id'];
+  }
 
-  //obtener id de imagen y guardarlo
+  //obtener id de archivo y guardarlo
   try {
     const descarga = await obtenerDescarga(id);
     const ruta = await guardarArchivo(descarga, telefono, id, tipo, filename);
@@ -60,15 +62,61 @@ const newFecha = () => {
 
 const validarPassword = value => {
   // Permitir cadena vacía o al menos 5 caracteres
-  if (value === '' || value.length >= 1 ) {
-      return true;
+  if (value === '' || value.length >= 1) {
+    return true;
   };
   return false;
+};
+
+const mostrarDatosEntradaWhatsapp = (data) => {
+  // Arreglo para almacenar los datos extraídos
+  const result = [];
+
+  // Extraemos los datos principales
+  data.entry.forEach(entry => {
+    entry.changes.forEach(change => {
+      const value = change.value;
+
+      // Datos principales de la entrada
+      result.push({
+        object: data.object,
+        entryId: entry.id,
+        messagingProduct: value.messaging_product,
+        displayPhoneNumber: value.metadata.display_phoneNumber,
+        phoneNumberId: value.metadata.phone_number_Id
+      });
+
+      // Extraemos los contactos
+      value.contacts.forEach(contact => {
+        result.push({
+          contactName: contact.profile.name,
+          waId: contact.wa_id
+        });
+      });
+
+      // Extraemos los mensajes
+      value.messages.forEach(message => {
+        result.push({
+          from: message.from,
+          messageId: message.id,
+          timestamp: new Date(parseInt(message.Timestamp) * 1000).toISOString(), // Convertir timestamp a fecha
+          type: message.type,
+          textBody: message.text.body
+        });
+      });
+    });
+  });
+
+  // Mostrar el arreglo en consola
+  console.log(result);
+
+
 }
 
 module.exports = {
+  mostrarDatosEntradaWhatsapp,
+  newFecha,
   numeroTelefono,
   rutaDescargaArchivoRecibido,
-  newFecha,
   validarPassword
 }

@@ -9,73 +9,52 @@ const Paciente = require('../models/paciente');
 const { MensajeError } = require('../helpers/error');
 const { urlMeta } = require('../cons/urls');
 const { optionsMessage } = require('../cons/optionsMessage');
-const { numeroTelefono, rutaDescargaArchivoRecibido, newFecha } = require('../helpers/funciones');
+const { numeroTelefono, rutaDescargaArchivoRecibido, newFecha, mostrarDatosEntradaWhatsapp } = require('../helpers/funciones');
 const { buscarNumeroExistente, obtenerPacientesPorUsuario } = require('./paciente');
 const { agregarPendiente, obtenerPendientes } = require('./sinAsignar');
 const { SampleText } = require('../helpers/textTypes');
 
 const Whatsapp = async (req, res = response) => {
-  console.log(req.body);
   try {
+    mostrarDatosEntradaWhatsapp(req.body);
     const entry = req.body['entry'][0];
     const changes = entry['changes'][0];
     const value = changes['value'];
     const messageObject = value['messages'];
 
-    if (typeof messageObject !== 'undefined') {
+    if (messageObject) {
       const type = messageObject[0]['type'];
+      const messages = messageObject[0];
+      const number = numeroTelefono(messages);
+
+      // Lógica común para procesar mensajes
+      const processMessage = async (type, messageContent, number, additionalData = {}) => {
+        const resExistente = await buscarNumeroExistente(number);
+        if (resExistente.ok === false) {
+          const respPendientes = await agregarPendiente(messageContent, number, type, ...Object.values(additionalData));
+          if (!respPendientes.err) {
+            req.io.emit('mensajes-sinAsignar', await obtenerPendientes());
+          }
+        } else {
+          const mensaje = await GuardarMensajeRecibido(messageContent, number, type, ...Object.values(additionalData));
+          const { ultimoMsg, uid } = mensaje;
+          req.io.to(uid).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
+          req.io.to(uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(resExistente.usuarioAsignado.uid));
+        }
+      };
+
       if (type === 'text') {
-        const messages = messageObject[0];
         const text = messages['text']['body'];
-        const number = numeroTelefono(messages);
-        const resExistente = await buscarNumeroExistente(number);
-        if (resExistente.ok === false) {
-          const respPendientes = await agregarPendiente(text, number, type);
-          if (!respPendientes.err) {
-            req.io.emit('mensajes-sinAsignar', await obtenerPendientes());
-          }
-        } else {
-          const mensaje = await GuardarMensajeRecibido(text, number, type);
-          const { ultimoMsg, uid } = mensaje;
-          req.io.to(uid).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
-          req.io.to(uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(resExistente.usuarioAsignado.uid));
-        };
-      };
-      if (type === 'image') {
-        const messages = messageObject[0];
-        const number = numeroTelefono(messages);
-        const {ruta} = await rutaDescargaArchivoRecibido(messages, number, type);
-        const resExistente = await buscarNumeroExistente(number);
-        if (resExistente.ok === false) {
-          const respPendientes = await agregarPendiente('Imagen Recibido', number, type, ruta);
-          if (!respPendientes.err) {
-            req.io.emit('mensajes-sinAsignar', await obtenerPendientes());
-          }
-        } else {
-          const mensaje = await GuardarMensajeRecibido('Imagen Recibido',number, type, ruta);
-          const { ultimoMsg, uid } = mensaje;
-          req.io.to(uid).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
-          req.io.to(uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(resExistente.usuarioAsignado.uid));
-        };
-      }
-      if (type === 'document') {
-        const messages = messageObject[0];
-        const number = numeroTelefono(messages);
+        await processMessage('text', text, number);
+      } else if (type === 'image' || type === 'document') {
         const { ruta, filename } = await rutaDescargaArchivoRecibido(messages, number, type);
-        const resExistente = await buscarNumeroExistente(number);
-        if (resExistente.ok === false) {
-          const respPendientes = await agregarPendiente('Documento Recibido',number, type, ruta, filename);
-          if (!respPendientes.err) {
-            req.io.sockets.emit('mensajes-sinAsignar', await obtenerPendientes());
-          };
-        } else {
-          const mensaje = await GuardarMensajeRecibido('Documento Recibido',number, type, ruta, filename);
-          const { ultimoMsg, uid } = mensaje;
-          req.io.to(uid).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
-          req.io.to(uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(resExistente.usuarioAsignado.uid));
-        };
-      };
-    };
+        const messageContent = type === 'image' ? 'Imagen Recibido' : 'Documento Recibido';
+        await processMessage(type, messageContent, number, { ruta, filename });
+      }else if(type === 'audio'){
+        console.log(messages);
+        const { id } = await rutaDescargaArchivoRecibido(messages, number, type);
+      }
+    }
     res.send('EVENT_RECEIVED');
   } catch (error) {
     console.log(error);
