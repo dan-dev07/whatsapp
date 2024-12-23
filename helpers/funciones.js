@@ -102,7 +102,7 @@ const mostrarDatosEntradaWhatsapp = (data) => {
           messageId: message.id,
           timestamp: dayjs(message.Timestamp).format('DD/MM/YYYY'),// Convertir timestamp a fecha
           type: message.type,
-          textBody: message.text.body
+          [message.type]: [message.type].id
         });
       });
     });
@@ -110,9 +110,7 @@ const mostrarDatosEntradaWhatsapp = (data) => {
 
   // Mostrar el arreglo en consola
   console.log(result);
-
-
-}
+};
 
 module.exports = {
   mostrarDatosEntradaWhatsapp,

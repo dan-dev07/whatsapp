@@ -24,14 +24,14 @@ const SampleImage =(number, id)=>{
   return data;
 };
 
-const SampleAudio =(number)=>{
+const SampleAudio =(number, id)=>{
   const data = JSON.stringify({
     "messaging_product": "whatsapp",
     "recipient_type": "individual",
     "to": number,
     "type": "audio",
     "audio": {
-      "link": "https://lookaside.fbsbx.com/whatsapp_business/attachments/?mid=1071889021132057&ext=1727904615&hash=ATvdhLwF2ZtcZVTTVUnEB21cgb2UFLKaQtixGY2XvVlMlw"
+      id
     }
   });
   return data;

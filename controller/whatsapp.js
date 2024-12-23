@@ -34,13 +34,13 @@ const Whatsapp = async (req, res = response) => {
           const respPendientes = await agregarPendiente(messageContent, number, type, ...Object.values(additionalData));
           if (!respPendientes.err) {
             req.io.emit('mensajes-sinAsignar', await obtenerPendientes());
-          }
+          };
         } else {
           const mensaje = await GuardarMensajeRecibido(messageContent, number, type, ...Object.values(additionalData));
           const { ultimoMsg, uid } = mensaje;
           req.io.to(uid).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
           req.io.to(uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(resExistente.usuarioAsignado.uid));
-        }
+        };
       };
 
       if (type === 'text') {
@@ -51,8 +51,8 @@ const Whatsapp = async (req, res = response) => {
         const messageContent = type === 'image' ? 'Imagen Recibido' : 'Documento Recibido';
         await processMessage(type, messageContent, number, { ruta, filename });
       }else if(type === 'audio'){
-        console.log(messages);
         const { id } = await rutaDescargaArchivoRecibido(messages, number, type);
+        console.log('audioId: ',id);
       }
     }
     res.send('EVENT_RECEIVED');
@@ -79,7 +79,7 @@ const VerifyToken = (req, res = response) => {
   };
 };
 
-const SendMessageWhatsApp = (textResponse, number = '525546841338') => {
+const SendMessageWhatsApp = (textResponse, number) => {
 
   try {
     //guardar información para el envio de datos a facebook
@@ -103,29 +103,7 @@ const SendMessageWhatsApp = (textResponse, number = '525546841338') => {
   }
 };
 
-const SendImageWhatsApp = async (data) => {
-  try {
-    //guardar información para el envio de datos a facebook
-    const options = optionsMessage(data);
-  
-    //enviar datos a facebook para reenviar mensaje al numero de teléfono
-    const req = https.request(options, res => {
-      res.on('data', d => {
-        process.stdout.write(d);
-      });
-    });
-    req.on('error', error => {
-      console.error('error: ', error);
-    });
-    req.write(data);
-    req.end();
-  } catch (error) {
-    console.log(error);
-  }
-
-};
-
-const SendDocumentWhatsApp = async (data) => {
+const SendFileWhatsApp =async(data)=>{
   try {
     //guardar información para el envio de datos a facebook
     const options = optionsMessage(data);
@@ -144,9 +122,8 @@ const SendDocumentWhatsApp = async (data) => {
   } catch (error) {
     console.log(error);
     return MensajeError('No se pudo enviar el documento', error);
-  }
-
-};
+  };
+}
 
 const SetFileWhatsApp = async (filename, mimetype, telefono, pathFile) => {
   const ruta = path.join(__dirname, 'uploads/', filename );
@@ -205,11 +182,10 @@ const GuardarMensajeRecibido = async (texto, telefono, tipo, urlDocumento, filen
 
 
 module.exports = {
-  VerifyToken,
-  SendMessageWhatsApp,
   GuardarMensajeRecibido,
-  SendImageWhatsApp,
-  SendDocumentWhatsApp,
+  SendFileWhatsApp,
+  SendMessageWhatsApp,
   SetFileWhatsApp,
+  VerifyToken,
   Whatsapp,
 }

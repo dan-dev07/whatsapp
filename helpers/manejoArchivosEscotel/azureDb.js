@@ -1,9 +1,10 @@
-const { BlobServiceClient } = require('@azure/storage-blob');
-const { MensajeError } = require('../error');
 const stream = require('stream');
-const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const fs = require('fs');
+require('dotenv').config();
+const { BlobServiceClient } = require('@azure/storage-blob');
+const { MensajeError } = require('../error');
+const { v4: uuidv4 } = require('uuid');
 
 // Configura tu conexión a Azure Blob Storage
 const AZURE_STORAGE_CONNECTION_STRING = process.env.AZURE_CONNECTION_STRING;
