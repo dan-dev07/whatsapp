@@ -54,6 +54,7 @@ const Whatsapp = async (req, res = response) => {
         const messageContent = 'Audio Recibido';
         await processMessage(type, messageContent, number, { ruta, filename });
       }else if(type === 'video'){
+        console.log(messages);
         const { ruta, filename } = await rutaDescargaArchivoRecibido(messages, number, type);
         const messageContent = 'Video Recibido';
         await processMessage(type, messageContent, number, { ruta, filename });
