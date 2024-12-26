@@ -23,7 +23,7 @@ const Whatsapp = async (req, res = response) => {
     const value = changes['value'];
     const messageObject = value['messages'];
 
-    if (messageObject !== null || messageObject !== undefined) {
+    if (typeof messageObject !== 'null' || messageObject !== 'undefined') {
       const type = messageObject[0]['type'];
       const messages = messageObject[0];
       const number = numeroTelefono(messages);
