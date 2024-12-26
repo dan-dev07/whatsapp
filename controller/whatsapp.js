@@ -47,12 +47,13 @@ const Whatsapp = async (req, res = response) => {
         const text = messages['text']['body'];
         await processMessage('text', text, number);
       } else if (type === 'image' || type === 'document') {
-        const { ruta, filename } = await rutaDescargaArchivoRecibido(messages, number, type);
+        const { ruta, filename} = await rutaDescargaArchivoRecibido(messages, number, type);
         const messageContent = type === 'image' ? 'Imagen Recibido' : 'Documento Recibido';
         await processMessage(type, messageContent, number, { ruta, filename });
       }else if(type === 'audio'){
-        const { id } = await rutaDescargaArchivoRecibido(messages, number, type);
-        console.log('audioId: ',id);
+        const { ruta, filename } = await rutaDescargaArchivoRecibido(messages, number, type);
+        const messageContent = 'Audio Recibido';
+        await processMessage(type, messageContent, number, { ruta, filename });
       }
     }
     res.send('EVENT_RECEIVED');

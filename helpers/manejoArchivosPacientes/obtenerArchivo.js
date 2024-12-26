@@ -12,7 +12,7 @@ const obtenerDescarga = async (id)=>{
     const descarga = await fetchApi(url2, 'arraybuffer');
     return new Buffer.from( descarga.data, 'binary' );
   } catch (error) {
-    console.log('No se pudo obtener el enlace de descarga o la descarga',error);
+    console.log('No se pudo obtener el enlace de descarga o la descarga del Paciente',error);
   }
 };
 
@@ -21,7 +21,7 @@ const guardarArchivo = async (descarga,telefono, id, tipo, filename) => {
     const respGuardado = await cargarArchivo(descarga, telefono, id, tipo, filename);
     return respGuardado;
   } catch (error) {
-    console.log('No se pudo obtener el enlace de descarga o la descarga',error);
+    console.log('No se pudo obtener el enlace de descarga o la descarga del Paciente',error);
   };
 };
 

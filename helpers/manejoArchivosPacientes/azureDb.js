@@ -17,7 +17,7 @@ const cargarArchivo =async(buffer, telefono, id, tipo, filename)=>{
     }else if (tipo === 'document') {
       blobName = `${telefono}/${filename}`;
     }else if(tipo === 'audio'){
-      blobName = `${telefono}/${id}.mp4`
+      blobName = `${telefono}/${id}.wav`
     };
     // Crear un cliente de servicio de blob
     const blobServiceClient = BlobServiceClient.fromConnectionString(AZURE_STORAGE_CONNECTION_STRING);
@@ -33,7 +33,7 @@ const cargarArchivo =async(buffer, telefono, id, tipo, filename)=>{
   
     // Subir el blob
     await blockBlobClient.uploadData(buffer);
-    // console.log(`El archivo se ha subido a ${blobName} en el contenedor ${containerName}`);
+    console.log(`El archivo se ha subido a ${blobName} en el contenedor ${containerName}`);
     return blobName;
     
   } catch (error) {

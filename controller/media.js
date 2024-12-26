@@ -2,7 +2,7 @@ const express = require("express");
 const multer = require('multer');
 const { descargarArchivo } = require("../helpers/manejoArchivosPacientes/azureDb");
 const { cargarArchivo } = require("../helpers/manejoArchivosEscotel/azureDb");
-const { SetFileWhatsApp, SendImageWhatsApp, SendDocumentWhatsApp, SendFileWhatsApp } = require("./whatsapp");
+const { SetFileWhatsApp, SendFileWhatsApp } = require("./whatsapp");
 const { SampleImage, SampleDocument, SampleAudio } = require("../helpers/textTypes");
 const { guardarArchivoEnviado } = require("./paciente");
 
@@ -11,13 +11,14 @@ const entregarArchivoBuffer = async (req, res = express.response) => {
   try {
     const { urlDocumento, tipo, telefono } = req.body;
 
-    if (tipo === 'image' || tipo === 'document') {
+    if (tipo === 'image' || tipo === 'document' || tipo === 'audio') {
       const bufferStream = await descargarArchivo(urlDocumento);
       if (bufferStream) {
         // Almacenar los datos en un buffer
         const chunks = [];
         bufferStream.on('data', (chunk) => {
           chunks.push(chunk);
+
         });
 
         bufferStream.on('end', () => {
@@ -25,11 +26,15 @@ const entregarArchivoBuffer = async (req, res = express.response) => {
           const base64 = buffer.toString('base64');
           if (tipo === 'image') {
             const dataUrl = `data:image/jpeg;base64,${base64}`; // Cambia 'image/jpeg' si es necesario
-            res.json({ image: dataUrl });
+            res.json({ file: dataUrl });
           };
           if (tipo === 'document') {
             const dataUrl = `${base64}`; // Tipo MIME para PDF
-            res.json({ document: dataUrl });
+            res.json({ file: dataUrl });
+          };
+          if (tipo === 'audio') {
+            const dataUrl = `data:audio/wav;base64,${base64}`; // Cambia 'image/jpeg' si es necesario
+            res.json({ file: dataUrl });
           }
         });
 
