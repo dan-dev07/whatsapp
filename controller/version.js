@@ -2,8 +2,8 @@ const express = require('express');
 
 const obtenerVersion = async (req, res = express.response) => {
   try {
-    const appVersion = 0.1;
-    const appEnv = 'Prod';
+    const appVersion = 0.2;
+    const appEnv = 'Dev';
     res.json({
       version: appVersion,
       env: appEnv,

@@ -18,7 +18,9 @@ const cargarArchivo =async(buffer, telefono, id, tipo, filename)=>{
       blobName = `${telefono}/${filename}`;
     }else if(tipo === 'audio'){
       blobName = `${telefono}/${id}.wav`
-    };
+    }else if (tipo === 'video') {
+      blobName = `${telefono}/${id}.mp4`
+    }
     // Crear un cliente de servicio de blob
     const blobServiceClient = BlobServiceClient.fromConnectionString(AZURE_STORAGE_CONNECTION_STRING);
   

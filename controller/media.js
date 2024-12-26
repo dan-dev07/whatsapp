@@ -11,7 +11,7 @@ const entregarArchivoBuffer = async (req, res = express.response) => {
   try {
     const { urlDocumento, tipo, telefono } = req.body;
 
-    if (tipo === 'image' || tipo === 'document' || tipo === 'audio') {
+    if (tipo === 'image' || tipo === 'document' || tipo === 'audio' || tipo === 'video') {
       const bufferStream = await descargarArchivo(urlDocumento);
       if (bufferStream) {
         // Almacenar los datos en un buffer
@@ -34,6 +34,10 @@ const entregarArchivoBuffer = async (req, res = express.response) => {
           };
           if (tipo === 'audio') {
             const dataUrl = `data:audio/wav;base64,${base64}`; // Cambia 'image/jpeg' si es necesario
+            res.json({ file: dataUrl });
+          }
+          if (tipo === 'video') {
+            const dataUrl = `data:video/mp4;base64,${base64}`; // Cambia 'image/jpeg' si es necesario
             res.json({ file: dataUrl });
           }
         });

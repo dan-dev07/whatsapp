@@ -20,6 +20,8 @@ const rutaDescargaArchivoRecibido = async (messages, telefono, tipo) => {
     filename = messages['document']['filename'];
   } else if (tipo === 'audio') {
     id = messages['audio']['id'];
+  } else if (tipo === 'video') {
+    id = messages['video']['id'];
   }
 
   //obtener id de archivo y guardarlo
@@ -97,12 +99,13 @@ const mostrarDatosEntradaWhatsapp = (data) => {
 
       // Extraemos los mensajes
       value.messages.forEach(message => {
+        console.log(message);
         result.push({
           from: message.from,
           messageId: message.id,
           timestamp: dayjs(message.Timestamp).format('DD/MM/YYYY'),// Convertir timestamp a fecha
           type: message.type,
-          [message.type]: [message.type].id
+          [message.type]:[message.type].id
         });
       });
     });

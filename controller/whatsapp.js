@@ -16,7 +16,6 @@ const { SampleText } = require('../helpers/textTypes');
 
 const Whatsapp = async (req, res = response) => {
   try {
-    mostrarDatosEntradaWhatsapp(req.body);
     const entry = req.body['entry'][0];
     const changes = entry['changes'][0];
     const value = changes['value'];
@@ -54,8 +53,12 @@ const Whatsapp = async (req, res = response) => {
         const { ruta, filename } = await rutaDescargaArchivoRecibido(messages, number, type);
         const messageContent = 'Audio Recibido';
         await processMessage(type, messageContent, number, { ruta, filename });
+      }else if(type === 'video'){
+        const { ruta, filename } = await rutaDescargaArchivoRecibido(messages, number, type);
+        const messageContent = 'Video Recibido';
+        await processMessage(type, messageContent, number, { ruta, filename });
       }
-    }
+    };
     res.send('EVENT_RECEIVED');
   } catch (error) {
     console.log(error);
