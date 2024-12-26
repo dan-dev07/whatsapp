@@ -17,7 +17,8 @@ const { typeMessages } = require('../cons/typeMessages');
 
 const Whatsapp = async (req, res = response) => {
   try {
-    // mostrarDatosEntradaWhatsapp(req.body);
+    console.log('--------------');
+    mostrarDatosEntradaWhatsapp(req.body);
     const entry = req.body['entry'][0];
     const changes = entry['changes'][0];
     const value = changes['value'];
