@@ -13,9 +13,11 @@ const { numeroTelefono, rutaDescargaArchivoRecibido, newFecha, mostrarDatosEntra
 const { buscarNumeroExistente, obtenerPacientesPorUsuario } = require('./paciente');
 const { agregarPendiente, obtenerPendientes } = require('./sinAsignar');
 const { SampleText } = require('../helpers/textTypes');
+const { typeMessages } = require('../cons/typeMessages');
 
 const Whatsapp = async (req, res = response) => {
   try {
+    // mostrarDatosEntradaWhatsapp(req.body);
     const entry = req.body['entry'][0];
     const changes = entry['changes'][0];
     const value = changes['value'];
@@ -41,22 +43,13 @@ const Whatsapp = async (req, res = response) => {
           req.io.to(uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(resExistente.usuarioAsignado.uid));
         };
       };
-
+      console.log(type);
       if (type === 'text') {
         const text = messages['text']['body'];
         await processMessage('text', text, number);
-      } else if (type === 'image' || type === 'document') {
+      } else {
         const { ruta, filename} = await rutaDescargaArchivoRecibido(messages, number, type);
-        const messageContent = type === 'image' ? 'Imagen Recibido' : 'Documento Recibido';
-        await processMessage(type, messageContent, number, { ruta, filename });
-      }else if(type === 'audio'){
-        const { ruta, filename } = await rutaDescargaArchivoRecibido(messages, number, type);
-        const messageContent = 'Audio Recibido';
-        await processMessage(type, messageContent, number, { ruta, filename });
-      }else if(type === 'video'){
-        console.log(messages);
-        const { ruta, filename } = await rutaDescargaArchivoRecibido(messages, number, type);
-        const messageContent = 'Video Recibido';
+        const messageContent = typeMessages[type];
         await processMessage(type, messageContent, number, { ruta, filename });
       }
     };
