@@ -3,7 +3,7 @@ const { fetchApi } = require('../../api/api');
 
 const obtenerDescarga = async (id)=>{
   try {
-    const url1 = `https://graph.facebook.com/v20.0/${id}`;
+    const url1 = `https://graph.facebook.com/v21.0/${id}`;
     const respuestaUrl = await fetchApi(url1);
     const { url } = respuestaUrl.data;
   
