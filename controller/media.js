@@ -68,7 +68,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-const enviarArchivo = async (uidUser, data, telefono,rutaBlobname, text, filename) => {
+const enviarArchivo = async (req, uidUser, data, telefono,rutaBlobname, text, filename) => {
   req.io.to(uidUser).emit('archivo-enviado', await guardarArchivoEnviado(telefono, uidUser, rutaBlobname, text, filename));
   //si el archivo se guarda correctamente, enviar el mensaje al 
   await SendFileWhatsApp(data);
