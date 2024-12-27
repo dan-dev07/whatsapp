@@ -83,10 +83,10 @@ const subirArchivo = async (req, res = express.response) => {
 
     if (mimetype.includes("image")) {
       const data = SampleImage(telefono, id);
-      enviarArchivo(uidUser, data, telefono, rutaBlobname, 'image');
+      enviarArchivo(req, uidUser, data, telefono, rutaBlobname, 'image');
     } else {
       const data = SampleDocument(telefono, id, filename);
-      enviarArchivo(uidUser, data, telefono, rutaBlobname, 'document', filename);
+      enviarArchivo(req, uidUser, data, telefono, rutaBlobname, 'document', filename);
     };
     res.send('Archivo recibido');
   } catch (error) {
