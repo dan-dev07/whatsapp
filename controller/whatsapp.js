@@ -15,6 +15,22 @@ const { agregarPendiente, obtenerPendientes } = require('./sinAsignar');
 const { SampleText } = require('../helpers/textTypes');
 const { typeMessages } = require('../cons/typeMessages');
 
+const processMessage = async ( req, type, messageContent, number, additionalData = {}) => {
+  const resExistente = await buscarNumeroExistente(number);
+  if (resExistente.ok === false) {
+    const respPendientes = await agregarPendiente(messageContent, number, type, ...Object.values(additionalData));
+    if (!respPendientes.err) {
+      req.io.emit('mensajes-sinAsignar', await obtenerPendientes());
+      return;
+    };
+  } else {
+    const mensaje = await GuardarMensajeRecibido(messageContent, number, type, ...Object.values(additionalData));
+    const { ultimoMsg, uid } = mensaje;
+    req.io.to(uid).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
+    req.io.to(uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(resExistente.usuarioAsignado.uid));
+  };
+};
+
 const Whatsapp = async (req, res = response) => {
   let n = 0;
   try {
@@ -29,25 +45,10 @@ const Whatsapp = async (req, res = response) => {
       const number = numeroTelefono(messages);
 
       // Lógica común para procesar mensajes
-      const processMessage = async (type, messageContent, number, additionalData = {}) => {
-        const resExistente = await buscarNumeroExistente(number);
-        if (resExistente.ok === false) {
-          const respPendientes = await agregarPendiente(messageContent, number, type, ...Object.values(additionalData));
-          if (!respPendientes.err) {
-            req.io.emit('mensajes-sinAsignar', await obtenerPendientes());
-            return;
-          };
-        } else {
-          console.log('count: ', n);
-          const mensaje = await GuardarMensajeRecibido(messageContent, number, type, ...Object.values(additionalData));
-          const { ultimoMsg, uid } = mensaje;
-          req.io.to(uid).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
-          req.io.to(uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(resExistente.usuarioAsignado.uid));
-        };
-      };
+      
       if (type === 'text') {
         const text = messages['text']['body'];
-        await processMessage('text', text, number);
+        await processMessage(req, 'text', text, number);
       } 
       // else {
       //   const { ruta, filename} = await rutaDescargaArchivoRecibido(messages, number, type);
@@ -55,7 +56,7 @@ const Whatsapp = async (req, res = response) => {
       //   await processMessage(type, messageContent, number, { ruta, filename });
       // }
     };
-    n++;
+    console.log(n++);
     res.send('EVENT_RECEIVED');
   } catch (error) {
     console.log(error);
