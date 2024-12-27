@@ -16,6 +16,7 @@ const { SampleText } = require('../helpers/textTypes');
 const { typeMessages } = require('../cons/typeMessages');
 
 const processMessage = async ( req, type, messageContent, number, additionalData = {}) => {
+  console.log('procces message');
   const resExistente = await buscarNumeroExistente(number);
   if (resExistente.ok === false) {
     const respPendientes = await agregarPendiente(messageContent, number, type, ...Object.values(additionalData));
@@ -23,40 +24,41 @@ const processMessage = async ( req, type, messageContent, number, additionalData
       req.io.emit('mensajes-sinAsignar', await obtenerPendientes());
       return;
     };
-  } else {
+  } else if (resExistente.ok){
     const mensaje = await GuardarMensajeRecibido(messageContent, number, type, ...Object.values(additionalData));
     const { ultimoMsg, uid } = mensaje;
     req.io.to(uid).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
     req.io.to(uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(resExistente.usuarioAsignado.uid));
+    return ;
   };
 };
 
 const Whatsapp = async (req, res = response) => {
-  let n = 0;
   try {
     const entry = req.body['entry'][0];
     const changes = entry['changes'][0];
     const value = changes['value'];
     const messageObject = value['messages'];
 
-    if (typeof messageObject !== 'null' || messageObject !== 'undefined') {
-      const type = messageObject[0]['type'];
-      const messages = messageObject[0];
-      const number = numeroTelefono(messages);
+    console.log(messageObject);
 
-      // Lógica común para procesar mensajes
+    // if (typeof messageObject !== 'null' || messageObject !== 'undefined') {
+    //   const type = messageObject[0]['type'];
+    //   const messages = messageObject[0];
+    //   const number = numeroTelefono(messages);
+
+    //   // Lógica común para procesar mensajes
       
-      if (type === 'text') {
-        const text = messages['text']['body'];
-        await processMessage(req, 'text', text, number);
-      } 
+    //   if (type === 'text') {
+    //     const text = messages['text']['body'];
+    //     await processMessage(req, 'text', text, number);
+    //   } 
       // else {
       //   const { ruta, filename} = await rutaDescargaArchivoRecibido(messages, number, type);
       //   const messageContent = typeMessages[type];
       //   await processMessage(type, messageContent, number, { ruta, filename });
       // }
     };
-    console.log(n++);
     res.send('EVENT_RECEIVED');
   } catch (error) {
     console.log(error);
