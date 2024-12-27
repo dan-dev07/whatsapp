@@ -15,21 +15,19 @@ const { agregarPendiente, obtenerPendientes } = require('./sinAsignar');
 const { SampleText } = require('../helpers/textTypes');
 const { typeMessages } = require('../cons/typeMessages');
 
-const processMessage = async ( req, type, messageContent, number, additionalData = {}) => {
+const processMessage = async (req, type, messageContent, number, additionalData = {}) => {
   console.log('procces message');
   const resExistente = await buscarNumeroExistente(number);
   if (resExistente.ok === false) {
     const respPendientes = await agregarPendiente(messageContent, number, type, ...Object.values(additionalData));
     if (!respPendientes.err) {
       req.io.emit('mensajes-sinAsignar', await obtenerPendientes());
-      return;
     };
-  } else if (resExistente.ok){
+  } else if (resExistente.ok) {
     const mensaje = await GuardarMensajeRecibido(messageContent, number, type, ...Object.values(additionalData));
     const { ultimoMsg, uid } = mensaje;
     req.io.to(uid).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
     req.io.to(uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(resExistente.usuarioAsignado.uid));
-    return ;
   };
 };
 
@@ -40,34 +38,28 @@ const Whatsapp = async (req, res = response) => {
     const value = changes['value'];
     const messageObject = value['messages'];
 
-    console.log(messageObject);
+    if (typeof messageObject !== 'null' || messageObject !== 'undefined') {
+      const type = messageObject[0]['type'];
+      const messages = messageObject[0];
+      const number = numeroTelefono(messages);
 
-    // if (typeof messageObject !== 'null' || messageObject !== 'undefined') {
-    //   const type = messageObject[0]['type'];
-    //   const messages = messageObject[0];
-    //   const number = numeroTelefono(messages);
-
-    //   // Lógica común para procesar mensajes
-      
-    //   if (type === 'text') {
-    //     const text = messages['text']['body'];
-    //     await processMessage(req, 'text', text, number);
-    //   } 
-      // else {
-      //   const { ruta, filename} = await rutaDescargaArchivoRecibido(messages, number, type);
-      //   const messageContent = typeMessages[type];
-      //   await processMessage(type, messageContent, number, { ruta, filename });
-      // }
-    // };
-    // res.send('EVENT_RECEIVED');
-    res.status(200).send('EVENT_RECEIVED');
+      // Lógica común para procesar mensajes
+      if (type === 'text') {
+        const text = messages['text']['body'];
+        await processMessage(req, 'text', text, number);
+      }
+      else {
+        const { ruta, filename } = await rutaDescargaArchivoRecibido(messages, number, type);
+        const messageContent = typeMessages[type];
+        await processMessage(type, messageContent, number, { ruta, filename });
+      }
+    };
+    res.send('EVENT_RECEIVED');
   } catch (error) {
     console.log(error);
-    // res.send('EVENT_RECEIVED');
-    res.status(200).send('EVENT_RECEIVED');
+    res.send('EVENT_RECEIVED');
   };
-}
-
+};
 
 const VerifyToken = (req, res = response) => {
   try {
@@ -91,7 +83,7 @@ const SendMessageWhatsApp = (textResponse, number) => {
     //guardar información para el envio de datos a facebook
     const data = SampleText(number, textResponse);
     const options = optionsMessage(data);
-  
+
     //enviar datos a facebook para reenviar mensaje al numero de teléfono
     const req = https.request(options, res => {
       res.on('data', d => {
@@ -103,17 +95,17 @@ const SendMessageWhatsApp = (textResponse, number) => {
     });
     req.write(data);
     req.end();
-    
+
   } catch (error) {
     console.log(error);
   }
 };
 
-const SendFileWhatsApp =async(data)=>{
+const SendFileWhatsApp = async (data) => {
   try {
     //guardar información para el envio de datos a facebook
     const options = optionsMessage(data);
-  
+
     //enviar datos a facebook para reenviar mensaje al numero de teléfono
     const req = https.request(options, res => {
       res.on('data', d => {
@@ -132,7 +124,7 @@ const SendFileWhatsApp =async(data)=>{
 }
 
 const SetFileWhatsApp = async (filename, mimetype, telefono, pathFile) => {
-  const ruta = path.join(__dirname, 'uploads/', filename );
+  const ruta = path.join(__dirname, 'uploads/', filename);
   const formData = new FormData();
   formData.append('file', (ruta));
   formData.append('messaging_product', 'whatsapp');
@@ -140,8 +132,8 @@ const SetFileWhatsApp = async (filename, mimetype, telefono, pathFile) => {
 
   try {
 
-    const resApiWhatsapp = await axios.postForm( `${urlMeta}/media`, {
-      "file":fs.createReadStream(ruta),
+    const resApiWhatsapp = await axios.postForm(`${urlMeta}/media`, {
+      "file": fs.createReadStream(ruta),
       "messaging_product": "whatsapp",
       "type": mimetype
     }, {
@@ -176,9 +168,9 @@ const GuardarMensajeRecibido = async (texto, telefono, tipo, urlDocumento, filen
       { new: true });
     const ultimoMsg = paciente.chats[paciente.chats.length - 1];
     const { uid } = paciente.usuarioAsignado;
-    return { 
-      ok:true,
-      ultimoMsg, 
+    return {
+      ok: true,
+      ultimoMsg,
       uid
     };
   } catch (error) {
