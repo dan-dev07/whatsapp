@@ -121,7 +121,7 @@ io.on('connection', async (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log('Cliente desconectado:', socket.id);
+    console.log('Cliente desconectado:', user.nombre);
   });
 });
 
