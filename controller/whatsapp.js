@@ -58,7 +58,7 @@ const Whatsapp = async (req, res = response) => {
       //   const messageContent = typeMessages[type];
       //   await processMessage(type, messageContent, number, { ruta, filename });
       // }
-    };
+    // };
     res.send('EVENT_RECEIVED');
   } catch (error) {
     console.log(error);
