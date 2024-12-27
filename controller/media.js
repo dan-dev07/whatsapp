@@ -5,6 +5,7 @@ const { cargarArchivo } = require("../helpers/manejoArchivosEscotel/azureDb");
 const { SetFileWhatsApp, SendFileWhatsApp } = require("./whatsapp");
 const { SampleImage, SampleDocument, SampleAudio } = require("../helpers/textTypes");
 const { guardarArchivoEnviado } = require("./paciente");
+const { isPipelineLike } = require("@azure/storage-blob");
 
 
 const entregarArchivoBuffer = async (req, res = express.response) => {
@@ -68,11 +69,18 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-const enviarArchivo = async (req, uidUser, data, telefono,rutaBlobname, text, filename) => {
-  req.io.to(uidUser).emit('archivo-enviado', await guardarArchivoEnviado(telefono, uidUser, rutaBlobname, text, filename));
-  //si el archivo se guarda correctamente, enviar el mensaje al 
-  await SendFileWhatsApp(data);
-}
+const enviarArchivo = async (req, uidUser, data, telefono, rutaBlobname, text, filename) => {
+  try {
+    const res = await guardarArchivoEnviado(telefono, uidUser, rutaBlobname, text, filename)
+    if (res.ok) {
+      //si el archivo se guarda correctamente, enviar el mensaje 
+      req.io.to(uidUser).emit('archivo-enviado', res.ultimo);
+      await SendFileWhatsApp(data);
+    };
+  } catch (error) {
+    console.log(error);
+  };
+};
 
 const subirArchivo = async (req, res = express.response) => {
   try {

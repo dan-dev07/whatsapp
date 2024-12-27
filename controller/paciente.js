@@ -2,6 +2,7 @@ const Paciente = require('../models/paciente');
 const SinAsignar = require('../models/sinAsignar');
 const Usuario = require('../models/usuario');
 const { newFecha } = require('../helpers/funciones');
+const { MensajeError } = require('../helpers/error');
 
 const agregarPaciente = async (datos) => {
   try {
@@ -69,10 +70,12 @@ const guardarArchivoEnviado = async (telefono, uid, urlDocumento, tipo, filename
       { $push: { chats: mensaje } },
       { new: true });
     const ultimo = paciente.chats[paciente.chats.length - 1];
-    return ultimo;
+    return {
+      ok:true,
+      ultimo
+    };
   } catch (error) {
-    console.log(error);
-    return { err: 'No se pudo obtener guardar el mensaje' };
+    return MensajeError('No se pudo guardar el archivo', error)
   };
 }
 
