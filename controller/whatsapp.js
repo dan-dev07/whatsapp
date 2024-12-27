@@ -16,7 +16,6 @@ const { SampleText } = require('../helpers/textTypes');
 const { typeMessages } = require('../cons/typeMessages');
 
 const processMessage = async (req, type, messageContent, number, additionalData = {}) => {
-  console.log('procces message');
   const resExistente = await buscarNumeroExistente(number);
   if (resExistente.ok === false) {
     const respPendientes = await agregarPendiente(messageContent, number, type, ...Object.values(additionalData));
@@ -38,7 +37,7 @@ const Whatsapp = async (req, res = response) => {
     const value = changes['value'];
     const messageObject = value['messages'];
 
-    if (typeof messageObject !== 'null' || messageObject !== 'undefined') {
+    if (messageObject) {
       const type = messageObject[0]['type'];
       const messages = messageObject[0];
       const number = numeroTelefono(messages);
@@ -47,11 +46,10 @@ const Whatsapp = async (req, res = response) => {
       if (type === 'text') {
         const text = messages['text']['body'];
         await processMessage(req, 'text', text, number);
-      }
-      else {
+      } else {
         const { ruta, filename } = await rutaDescargaArchivoRecibido(messages, number, type);
         const messageContent = typeMessages[type];
-        await processMessage(type, messageContent, number, { ruta, filename });
+        await processMessage(req, type, messageContent, number, { ruta, filename });
       }
     };
     res.send('EVENT_RECEIVED');
