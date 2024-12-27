@@ -59,10 +59,12 @@ const Whatsapp = async (req, res = response) => {
       //   await processMessage(type, messageContent, number, { ruta, filename });
       // }
     // };
-    res.send('EVENT_RECEIVED');
+    // res.send('EVENT_RECEIVED');
+    res.status(200);
   } catch (error) {
     console.log(error);
-    res.send('EVENT_RECEIVED');
+    // res.send('EVENT_RECEIVED');
+    res.status(200);
   };
 }
 
