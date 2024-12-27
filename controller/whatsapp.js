@@ -60,11 +60,11 @@ const Whatsapp = async (req, res = response) => {
       // }
     // };
     // res.send('EVENT_RECEIVED');
-    res.status(200);
+    res.status(200).send('EVENT_RECEIVED');
   } catch (error) {
     console.log(error);
     // res.send('EVENT_RECEIVED');
-    res.status(200);
+    res.status(200).send('EVENT_RECEIVED');
   };
 }
 
