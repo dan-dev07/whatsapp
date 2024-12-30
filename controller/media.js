@@ -5,8 +5,6 @@ const { cargarArchivo } = require("../helpers/manejoArchivosEscotel/azureDb");
 const { SetFileWhatsApp, SendFileWhatsApp } = require("./whatsapp");
 const { SampleImage, SampleDocument, SampleAudio } = require("../helpers/textTypes");
 const { guardarArchivoEnviado } = require("./paciente");
-const { isPipelineLike } = require("@azure/storage-blob");
-
 
 const entregarArchivoBuffer = async (req, res = express.response) => {
   try {

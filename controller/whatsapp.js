@@ -31,6 +31,7 @@ const processMessage = async (req, type, messageContent, number, additionalData 
 };
 
 const Whatsapp = async (req, res = response) => {
+  mostrarDatosEntradaWhatsapp(req.body);
   try {
     const entry = req.body['entry'][0];
     const changes = entry['changes'][0];
@@ -50,7 +51,7 @@ const Whatsapp = async (req, res = response) => {
         const { ruta, filename } = await rutaDescargaArchivoRecibido(messages, number, type);
         const messageContent = typeMessages[type];
         await processMessage(req, type, messageContent, number, { ruta, filename });
-      }
+      };
     };
     res.send('EVENT_RECEIVED');
   } catch (error) {
