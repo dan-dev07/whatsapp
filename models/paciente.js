@@ -9,12 +9,12 @@ const PacienteSchema = new Schema({
   telefono: {
     type: String,
     required: false,
-    unique:true
+    unique: true
   },
-  uid:{
-    type:String,
-    require:true,
-    unique:true
+  uid: {
+    type: String,
+    require: true,
+    unique: true
   },
   usuarioAsignado: {
     nombre: {
@@ -25,11 +25,11 @@ const PacienteSchema = new Schema({
     email: {
       type: String,
       required: true,
-      trim:true,
+      trim: true,
     },
-    uid:{
-      type:String,
-      required:true,
+    uid: {
+      type: String,
+      required: true,
     }
   },
   ultimaComunicacion: {
@@ -38,34 +38,39 @@ const PacienteSchema = new Schema({
   },
   chats:
     [{
-      fecha:{
-        type:String,
-        required:true
+      fecha: {
+        type: String,
+        required: true
       },
-      emisor:{
-        type:String,
-        required:true,
+      emisor: {
+        type: String,
+        required: true,
       },
-      tipo:{
-        type:String,
-        required:true
+      tipo: {
+        type: String,
+        required: true
       },
-      urlDocumento:{
-        type:String,
-        required:false,
+      urlDocumento: {
+        type: String,
+        required: false,
       },
-      filename:{
-        type:String,
-        required:false
+      filename: {
+        type: String,
+        required: false
       },
-      mensaje:{
-        type:String,
-        required:false,
-        trim:true
+      mensaje: {
+        type: String,
+        required: true,
+        trim: true
       },
-      leido:{
-        type:Boolean,
-        required:false
+      mensajeId: {
+        type: String,
+        required: true,
+        trim: true
+      },
+      leido: {
+        type: Boolean,
+        required: false
       },
     }]
 });

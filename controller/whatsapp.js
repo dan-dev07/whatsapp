@@ -15,15 +15,17 @@ const { agregarPendiente, obtenerPendientes } = require('./sinAsignar');
 const { SampleText } = require('../helpers/textTypes');
 const { typeMessages } = require('../cons/typeMessages');
 
-const processMessage = async (req, type, messageContent, number, additionalData = {}) => {
+const processMessage = async (req, messages, additionalData = {}) => {
+  const { type, from: number, id } = messages;
+  const messageContent = type === 'text' ? messages['text']['body'] : typeMessages[type];
   const resExistente = await buscarNumeroExistente(number);
   if (resExistente.ok === false) {
-    const respPendientes = await agregarPendiente(messageContent, number, type, ...Object.values(additionalData));
+    const respPendientes = await agregarPendiente(id, messageContent, number, type, ...Object.values(additionalData));
     if (!respPendientes.err) {
       req.io.emit('mensajes-sinAsignar', await obtenerPendientes());
     };
   } else if (resExistente.ok) {
-    const mensaje = await GuardarMensajeRecibido(messageContent, number, type, ...Object.values(additionalData));
+    const mensaje = await GuardarMensajeRecibido(id, messageContent, number, type, ...Object.values(additionalData));
     const { ultimoMsg, uid } = mensaje;
     req.io.to(uid).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
     req.io.to(uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(resExistente.usuarioAsignado.uid));
@@ -41,16 +43,13 @@ const Whatsapp = async (req, res = response) => {
     if (messageObject) {
       const type = messageObject[0]['type'];
       const messages = messageObject[0];
-      const number = numeroTelefono(messages);
 
       // Lógica común para procesar mensajes
       if (type === 'text') {
-        const text = messages['text']['body'];
-        await processMessage(req, 'text', text, number);
+        await processMessage(req, messages);
       } else {
-        const { ruta, filename } = await rutaDescargaArchivoRecibido(messages, number, type);
-        const messageContent = typeMessages[type];
-        await processMessage(req, type, messageContent, number, { ruta, filename });
+        const { ruta, filename } = await rutaDescargaArchivoRecibido(messages);
+        await processMessage(req, messages, { ruta, filename });
       };
     };
     res.send('EVENT_RECEIVED');
@@ -76,28 +75,35 @@ const VerifyToken = (req, res = response) => {
   };
 };
 
-const SendMessageWhatsApp = (textResponse, number) => {
+const SendMessageWhatsApp = async (textResponse, number) => {
+  const data = SampleText(number, textResponse);
+  const options = optionsMessage(data);
 
-  try {
-    //guardar información para el envio de datos a facebook
-    const data = SampleText(number, textResponse);
-    const options = optionsMessage(data);
-
-    //enviar datos a facebook para reenviar mensaje al numero de teléfono
-    const req = https.request(options, res => {
-      res.on('data', d => {
+  return new Promise ((resolve, reject)=>{
+    let responseData = '';
+    const req = https.request(options, res=>{
+      res.on('data', d=>{
         process.stdout.write(d);
+        responseData += d;
+      });
+      res.on('end', ()=>{
+        try {
+          const jsonResponse = JSON.parse(responseData);
+          const messageId = jsonResponse.messages && jsonResponse.messages[0] ? jsonResponse.messages[0].id : null;
+          resolve(messageId);
+        } catch (error) {
+          console.log(error);
+          reject('Error al convertir los datos a JSON desde facebook.com');
+        };
       });
     });
     req.on('error', error => {
-      console.error('error: ', error);
+      reject('Error de solicitud: ' + error);
     });
     req.write(data);
     req.end();
-
-  } catch (error) {
-    console.log(error);
-  }
+  });
+  
 };
 
 const SendFileWhatsApp = async (data) => {
@@ -150,7 +156,7 @@ const SetFileWhatsApp = async (filename, mimetype, telefono, pathFile) => {
   };
 };
 
-const GuardarMensajeRecibido = async (texto, telefono, tipo, urlDocumento, filename) => {
+const GuardarMensajeRecibido = async (id, texto, telefono, tipo, urlDocumento, filename) => {
   try {
     const mensaje = {
       fecha: newFecha(),
@@ -159,6 +165,7 @@ const GuardarMensajeRecibido = async (texto, telefono, tipo, urlDocumento, filen
       filename,
       urlDocumento,
       mensaje: texto,
+      mensajeId: id,
       leido: false,
     };
     const paciente = await Paciente.findOneAndUpdate(
@@ -186,3 +193,13 @@ module.exports = {
   VerifyToken,
   Whatsapp,
 }
+
+// {
+//   "messaging_product": "whatsapp",
+//   "contacts": [
+//     { "input": "52155555555555", "wa_id": "521555555555555" }
+//   ],
+//   "messages": [
+//     { "id": "wamid.id" }
+//   ]
+// }

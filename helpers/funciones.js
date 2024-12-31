@@ -10,7 +10,8 @@ const numeroTelefono = (messages) => {
   return newNumber;
 };
 
-const rutaDescargaArchivoRecibido = async (messages, telefono, tipo) => {
+const rutaDescargaArchivoRecibido = async (messages) => {
+  const {type:tipo, from:telefono} = messages;
   let id;
   let filename;
   if (tipo === 'image') {
@@ -22,7 +23,7 @@ const rutaDescargaArchivoRecibido = async (messages, telefono, tipo) => {
     id = messages['audio']['id'];
   } else if (tipo === 'video') {
     id = messages['video']['id'];
-  }
+  };
 
   //obtener id de archivo y guardarlo
   try {
@@ -112,7 +113,7 @@ const mostrarDatosEntradaWhatsapp = (data) => {
   });
 
   // Mostrar el arreglo en consola
-  console.log(result);
+  // console.log(result);
 };
 
 module.exports = {

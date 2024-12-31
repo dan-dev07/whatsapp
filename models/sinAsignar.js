@@ -34,7 +34,12 @@ const SinAsignarSchema = Schema({
     },
     mensaje:{
       type:String,
-      required:false,
+      required:true,
+      trim:true
+    },
+    mensajeId:{
+      type:String,
+      required:true,
       trim:true
     }
   }]

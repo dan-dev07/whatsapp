@@ -1,7 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
 const { newFecha } = require('../helpers/funciones');
 const SinAsignar = require('../models/sinAsignar');
-const CryptoJS = require('crypto-js');
 
 const obtenerPendientes = async () => {
   try {
@@ -15,12 +14,11 @@ const obtenerPendientes = async () => {
       const ultimo = mensajes[mensajes.length - 1];
       return {
         telefono,
-        mensaje: ultimo.mensaje,
+        uid,
         fecha: ultimo.fecha,
-        uid: uid,
         emisor: ultimo.emisor,
         tipo: ultimo.tipo,
-        idArchivo: ultimo.idArchivo,
+        mensaje: ultimo.mensaje,
       }
     });
     return {
@@ -35,11 +33,11 @@ const obtenerPendientes = async () => {
   }
 };
 
-const agregarPendiente = async (mensaje, telefono, tipo, urlDocumento, filename, emisor='Paciente')=>{
+const agregarPendiente = async (id, mensaje, telefono, tipo, urlDocumento, filename, emisor='Paciente')=>{
   try {
     const fecha = newFecha();
     const uid = uuidv4();
-    const mensajes = { fecha, emisor, tipo, urlDocumento, filename, mensaje};
+    const mensajes = { fecha, emisor, tipo, urlDocumento, filename, mensaje, mensajeId:id};
     // buscar en pendientes y actualizar
     const mensajePaciente = await SinAsignar.findOne({ telefono });
     if (!mensajePaciente) {

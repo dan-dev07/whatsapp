@@ -6,15 +6,12 @@ const { MensajeError } = require('../helpers/error');
 
 const agregarPaciente = async (datos) => {
   try {
-    // console.log('agregarPaciente');
     const { telefono, userUid, pacienteUid, ultimaComunicacion } = datos;
-    const user = await Usuario.findOne({uid:userUid})
-    const pendiente = await SinAsignar.findOne({ telefono, uid:pacienteUid });
+    const user = await Usuario.findOne({ uid: userUid })
+    const pendiente = await SinAsignar.findOne({ telefono, uid: pacienteUid });
     const chats = pendiente.mensajes;
-    const paciente = await Paciente.create({ nombrePaciente:pendiente.nombrePaciente, telefono, uid:pacienteUid, usuarioAsignado: user, ultimaComunicacion, chats: chats });
-    // await paciente.save();
+    const paciente = await Paciente.create({ nombrePaciente: pendiente.nombrePaciente, telefono, uid: pacienteUid, usuarioAsignado: user, ultimaComunicacion, chats });
     await SinAsignar.findOneAndDelete({ telefono });
-    // console.log('Paciente agregado');
     return ({
       paciente
     });
@@ -28,7 +25,7 @@ const obtenerPacientesPorUsuario = async (uid) => {
   try {
     const pacientesPorUsuario = (await Paciente.find({ 'usuarioAsignado.uid': uid })).map(p => {
       const { nombrePaciente, telefono, chats, uid } = p;
-      const ultimoMsg = chats[chats.length - 1];  
+      const ultimoMsg = chats[chats.length - 1];
       const { fecha, mensaje, leido, tipo, emisor } = ultimoMsg;
       return { nombrePaciente, telefono, uid, fecha, mensaje, leido, tipo, emisor };
     });
@@ -43,7 +40,11 @@ const guardarMensajeEnviado = async (telefono, uid, mensaje) => {
   try {
     const paciente = await Paciente.findOneAndUpdate(
       { telefono, 'usuarioAsignado.uid': uid },
-      { $push: { chats: mensaje } },
+      {
+        $push: {
+          chats: mensaje
+        }
+      },
       { new: true });
     const ultimo = paciente.chats[paciente.chats.length - 1];
     return ultimo;
@@ -62,7 +63,7 @@ const guardarArchivoEnviado = async (telefono, uid, urlDocumento, tipo, filename
       tipo,
       filename,
       urlDocumento,
-      mensaje: tipo==='image'?"Imagen enviado":"Documento enviado",
+      mensaje: tipo === 'image' ? "Imagen enviado" : "Documento enviado",
       leido: false,
     }
     const paciente = await Paciente.findOneAndUpdate(
@@ -71,7 +72,7 @@ const guardarArchivoEnviado = async (telefono, uid, urlDocumento, tipo, filename
       { new: true });
     const ultimo = paciente.chats[paciente.chats.length - 1];
     return {
-      ok:true,
+      ok: true,
       ultimo
     };
   } catch (error) {
@@ -137,22 +138,22 @@ const reasignarPaciente = async (telefono, nuevoUsuario, anteriorUsuario, pacien
   try {
     // if (!anteriorUsuario || anteriorUsuario.nombre === '' || anteriorUsuario.email === '' || anteriorUsuario.uid === '') {
     if (!anteriorUsuario || anteriorUsuario.uid === '' || anteriorUsuario.uid === null) {
-      const nuevoPaciente = await agregarPaciente({ 
+      const nuevoPaciente = await agregarPaciente({
         telefono,
-        userUid:nuevoUsuario.uid,
-        pacienteUid, 
-        ultimaComunicacion: '' 
+        userUid: nuevoUsuario.uid,
+        pacienteUid,
+        ultimaComunicacion: ''
       });
       if (!nuevoPaciente) {
-        return { ok: false };  
+        return { ok: false };
       };
       // console.log('paciente asignado');
       return { ok: true };
     };
-    const user = await Usuario.findOne({uid:nuevoUsuario.uid});
+    const user = await Usuario.findOne({ uid: nuevoUsuario.uid });
     const pacienteActualizado = await Paciente.findOneAndUpdate(
-      { telefono, uid:pacienteUid },
-      { usuarioAsignado: user }, 
+      { telefono, uid: pacienteUid },
+      { usuarioAsignado: user },
       { new: true }
     );
     // console.log('paciente reasignado');

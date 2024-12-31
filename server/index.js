@@ -68,9 +68,9 @@ io.on('connection', async (socket) => {
 
   socket.on('mensaje-enviado', async (data, callback) => {
     const { telefono, emisor, fecha, leido, mensaje, user, tipo } = data;
-    const ultimo = await guardarMensajeEnviado(telefono, user.uid, { emisor, fecha, leido, mensaje, tipo });
+    const mensajeId = await SendMessageWhatsApp(mensaje, telefono);
+    const ultimo = await guardarMensajeEnviado(telefono, user.uid, { emisor, fecha, leido, mensaje, tipo, mensajeId } );
     callback(ultimo);
-    SendMessageWhatsApp(mensaje, telefono);
     socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.uid));
   });
 
