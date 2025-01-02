@@ -1,9 +1,8 @@
 const dayjs = require('dayjs');
 const { obtenerDescarga, guardarArchivo } = require('./manejoArchivosPacientes/obtenerArchivo');
 
-const numeroTelefono = (messages) => {
+const numeroTelefono = (number) => {
   let newNumber = '';
-  const number = messages['from'];
   if (number.length === 13 && number.startsWith('521')) {
     newNumber = '52' + number.slice(3, 13);
   };
@@ -91,12 +90,12 @@ const mostrarDatosEntradaWhatsapp = (data) => {
       });
 
       // Extraemos los contactos
-      value.contacts.forEach(contact => {
-        result.push({
-          contactName: contact.profile.name,
-          waId: contact.wa_id
-        });
-      });
+      // value.contacts.forEach(contact => {
+      //   result.push({
+      //     contactName: contact.profile.name,
+      //     waId: contact.wa_id
+      //   });
+      // });
 
       // Extraemos los mensajes
       value.messages.forEach(message => {
@@ -113,7 +112,7 @@ const mostrarDatosEntradaWhatsapp = (data) => {
   });
 
   // Mostrar el arreglo en consola
-  // console.log(result);
+  console.log(result);
 };
 
 module.exports = {

@@ -16,7 +16,8 @@ const { SampleText } = require('../helpers/textTypes');
 const { typeMessages } = require('../cons/typeMessages');
 
 const processMessage = async (req, messages, additionalData = {}) => {
-  const { type, from: number, id } = messages;
+  const { type, from, id } = messages;
+  const number = numeroTelefono(from);
   const messageContent = type === 'text' ? messages['text']['body'] : typeMessages[type];
   const resExistente = await buscarNumeroExistente(number);
   if (resExistente.ok === false) {
@@ -33,7 +34,6 @@ const processMessage = async (req, messages, additionalData = {}) => {
 };
 
 const Whatsapp = async (req, res = response) => {
-  mostrarDatosEntradaWhatsapp(req.body);
   try {
     const entry = req.body['entry'][0];
     const changes = entry['changes'][0];
