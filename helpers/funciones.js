@@ -10,7 +10,7 @@ const numeroTelefono = (number) => {
 };
 
 const rutaDescargaArchivoRecibido = async (messages) => {
-  const {type:tipo, from:telefono} = messages;
+  const { type: tipo, from: telefono } = messages;
   let id;
   let filename;
   if (tipo === 'image') {
@@ -75,41 +75,46 @@ const mostrarDatosEntradaWhatsapp = (data) => {
   // Arreglo para almacenar los datos extraídos
   const result = [];
 
-  // Extraemos los datos principales
-  data.entry.forEach(entry => {
-    entry.changes.forEach(change => {
-      const value = change.value;
+  try {
 
-      // Datos principales de la entrada
-      result.push({
-        object: data.object,
-        entryId: entry.id,
-        messagingProduct: value.messaging_product,
-        displayPhoneNumber: value.metadata.display_phoneNumber,
-        phoneNumberId: value.metadata.phone_number_Id
-      });
+    // Extraemos los datos principales
+    data.entry.forEach(entry => {
+      entry.changes.forEach(change => {
+        const value = change.value;
 
-      // Extraemos los contactos
-      // value.contacts.forEach(contact => {
-      //   result.push({
-      //     contactName: contact.profile.name,
-      //     waId: contact.wa_id
-      //   });
-      // });
-
-      // Extraemos los mensajes
-      value.messages.forEach(message => {
-        console.log(message);
+        // Datos principales de la entrada
         result.push({
-          from: message.from,
-          messageId: message.id,
-          timestamp: dayjs(message.Timestamp).format('DD/MM/YYYY'),// Convertir timestamp a fecha
-          type: message.type,
-          [message.type]:[message.type].id
+          object: data.object,
+          entryId: entry.id,
+          messagingProduct: value.messaging_product,
+          displayPhoneNumber: value.metadata.display_phoneNumber,
+          phoneNumberId: value.metadata.phone_number_Id
+        });
+
+        // Extraemos los contactos
+        value.contacts.forEach(contact => {
+          result.push({
+            contactName: contact.profile.name,
+            waId: contact.wa_id
+          });
+        });
+
+        // Extraemos los mensajes
+        value.messages.forEach(message => {
+          console.log(message);
+          result.push({
+            from: message.from,
+            messageId: message.id,
+            timestamp: dayjs(message.Timestamp).format('DD/MM/YYYY'),// Convertir timestamp a fecha
+            type: message.type,
+            [message.type]: [message.type].id
+          });
         });
       });
     });
-  });
+  } catch (error) {
+    console.log(error);
+  }
 
   // Mostrar el arreglo en consola
   console.log(result);
