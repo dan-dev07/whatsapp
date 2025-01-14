@@ -45,12 +45,7 @@ const Whatsapp = async (req, res = response) => {
     if (messageObject) {
       const type = messageObject[0]['type'];
       const messages = messageObject[0];
-      const {context} = messages;
 
-      //Para el manejo de mensajes con context -->Respuesta a otros mensajes
-
-
-      // Lógica común para procesar mensajes
       if (type === 'text') {
         await processMessage(req, messages);
       } else {
