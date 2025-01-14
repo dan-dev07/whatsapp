@@ -72,6 +72,23 @@ const PacienteSchema = new Schema({
         type: Boolean,
         required: false
       },
+      context:{
+        message_id:{
+          type:String,
+          required:false,
+          trim:true
+        },
+        from:{
+          type:String,
+          required:false,
+          trim:true,
+        },
+        id:{
+          type:String,
+          required:false,
+          trim:true
+        }
+      },
     }]
 });
 

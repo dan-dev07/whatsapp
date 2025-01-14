@@ -80,6 +80,30 @@ const SampleDocument =(number, id, filename)=>{
   });
   return data;
 };
+const ReplyDocument =(number, id, filename)=>{
+  const data = JSON.stringify({
+    "messaging_product": "whatsapp",
+    "recipient_type": "individual",
+    "to": number,
+    "context": {
+      "message_id": message_id
+    },
+    "type": "document",
+    "document": {
+      id,
+      filename
+    }
+  });
+  return data;
+};
+const  MessageStatus = (id)=>{
+  const data = JSON.stringify({
+    "messaging_product": "whatsapp",
+    "status": "read",
+    "message_id": id
+  });
+  return data;
+}
 
 const SampleButton =(number)=>{
   const data = JSON.stringify({
@@ -123,6 +147,8 @@ const SampleButton =(number)=>{
 
 
 module.exports ={
+  MessageStatus,
+  ReplyDocument,
   ReplyText,
   SampleAudio,
   SampleButton,

@@ -54,6 +54,25 @@ const guardarMensajeEnviado = async (telefono, uid, mensaje) => {
   };
 };
 
+const guardarReplyMensajeEnviado = async (telefono, uid, mensaje) => {
+  try {
+    console.log("guardarReplyMensaje",mensaje);
+    const paciente = await Paciente.findOneAndUpdate(
+      { telefono, 'usuarioAsignado.uid': uid },
+      {
+        $push: {
+          chats: mensaje
+        }
+      },
+      { new: true });
+    const ultimo = paciente.chats[paciente.chats.length - 1];
+    return ultimo;
+  } catch (error) {
+    console.log(error);
+    return { err: 'No se pudo obtener guardar el mensaje' };
+  };
+};
+
 const guardarArchivoEnviado = async (telefono, uid, urlDocumento, tipo, filename) => {
   try {
     const fecha = newFecha();
@@ -169,11 +188,12 @@ const reasignarPaciente = async (telefono, nuevoUsuario, anteriorUsuario, pacien
 
 module.exports = {
   agregarPaciente,
-  obtenerPacientesPorUsuario,
-  guardarMensajeEnviado,
-  guardarArchivoEnviado,
-  obtenerConversacionActual,
   buscarNumeroExistente,
+  guardarArchivoEnviado,
+  guardarMensajeEnviado,
+  guardarReplyMensajeEnviado,
+  obtenerConversacionActual,
+  obtenerPacientesPorUsuario,
   quitarUsuario,
   reasignarPaciente,
 }

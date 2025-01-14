@@ -2,6 +2,7 @@ const { response } = require('express');
 const Paciente = require('../models/paciente');
 const SinAsignar = require('../models/sinAsignar');
 const { obtenerPacientesPorUsuario } = require('./paciente');
+const { MensajeLeido } = require('./whatsapp');
 
 const allMessages = async (req, res = response) => {
   try {
@@ -63,6 +64,7 @@ const getChat = async (req, res = response)=>{
     const pacienteActualizado = await Paciente.findOneAndUpdate({ telefono, 'usuarioAsignado.uid': uid }, { chats: mensajesLeidos }, { new: true });
     const { chats: chatsAct } = pacienteActualizado;
     // console.log('Enviado');
+    // MensajeLeido(chatsAct[chatsAct.length - 1].mensajeId);
     req.io.to(uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(uid));
     res.send( chatsAct );
   } catch (error) {

@@ -1,3 +1,8 @@
+const authFacebook = {
+  headers: {
+    "Content-type": "application/json",
+    "Authorization": `Bearer ${process.env.WHATSAPP_API_KEY}`
+  }};
 
 const optionsMessage =(data) => {
   const options ={
@@ -13,5 +18,6 @@ const optionsMessage =(data) => {
 };
 
 module.exports ={
-  optionsMessage
-}
+  authFacebook,
+  optionsMessage,
+};

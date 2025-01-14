@@ -8,25 +8,26 @@ const fs = require('fs');
 const Paciente = require('../models/paciente');
 const { MensajeError } = require('../helpers/error');
 const { urlMeta } = require('../cons/urls');
-const { optionsMessage } = require('../cons/optionsMessage');
+const { authFacebook } = require('../cons/optionsMessage');
 const { numeroTelefono, rutaDescargaArchivoRecibido, newFecha, mostrarDatosEntradaWhatsapp } = require('../helpers/funciones');
-const { buscarNumeroExistente, obtenerPacientesPorUsuario } = require('./paciente');
+const { buscarNumeroExistente, obtenerPacientesPorUsuario, guardarReplyMensajeEnviado } = require('./paciente');
 const { agregarPendiente, obtenerPendientes } = require('./sinAsignar');
-const { SampleText } = require('../helpers/textTypes');
+const { SampleText, ReplyText, ReplyDocument, MessageStatus } = require('../helpers/textTypes');
 const { typeMessages } = require('../cons/typeMessages');
 
 const processMessage = async (req, messages, additionalData = {}) => {
-  const { type, from, id } = messages;
+  const { type, from, id, context } = messages;
+  console.log('context: ',context);
   const number = numeroTelefono(from);
   const messageContent = type === 'text' ? messages['text']['body'] : typeMessages[type];
   const resExistente = await buscarNumeroExistente(number);
   if (resExistente.ok === false) {
-    const respPendientes = await agregarPendiente(id, messageContent, number, type, ...Object.values(additionalData));
+    const respPendientes = await agregarPendiente(id, messageContent, number, type,...Object.values(additionalData));
     if (!respPendientes.err) {
       req.io.emit('mensajes-sinAsignar', await obtenerPendientes());
     };
   } else if (resExistente.ok) {
-    const mensaje = await GuardarMensajeRecibido(id, messageContent, number, type, ...Object.values(additionalData));
+    const mensaje = await GuardarMensajeRecibido(id, messageContent, number, type, context, ...Object.values(additionalData));
     const { ultimoMsg, uid } = mensaje;
     req.io.to(uid).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
     req.io.to(uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(resExistente.usuarioAsignado.uid));
@@ -44,6 +45,10 @@ const Whatsapp = async (req, res = response) => {
     if (messageObject) {
       const type = messageObject[0]['type'];
       const messages = messageObject[0];
+      const {context} = messages;
+
+      //Para el manejo de mensajes con context -->Respuesta a otros mensajes
+
 
       // Lógica común para procesar mensajes
       if (type === 'text') {
@@ -77,59 +82,79 @@ const VerifyToken = (req, res = response) => {
 };
 
 const SendMessageWhatsApp = async (textResponse, number) => {
-  const data = SampleText(number, textResponse);
-  const options = optionsMessage(data);
+  try {
+    const data = SampleText(number, textResponse);
+    const res = await axios.post(`${urlMeta}/messages`, data, authFacebook);
+    if (res.status !== 200) {
+      return MensajeError('Error al enviar el mensaje en -->SendMessage', res.statusText);
+    }
+    const {messages} = res.data;
+    console.log('messageId: ',messages[0].id);
+    return messages[0].id;  
+  } catch (error) {
+    return MensajeError('Error en -->SendReplyMessage', error);
+  };
+};
 
-  return new Promise ((resolve, reject)=>{
-    let responseData = '';
-    const req = https.request(options, res=>{
-      res.on('data', d=>{
-        process.stdout.write(d);
-        responseData += d;
-      });
-      res.on('end', ()=>{
-        try {
-          const jsonResponse = JSON.parse(responseData);
-          const messageId = jsonResponse.messages && jsonResponse.messages[0] ? jsonResponse.messages[0].id : null;
-          resolve(messageId);
-        } catch (error) {
-          console.log(error);
-          reject('Error al convertir los datos a JSON desde facebook.com');
-        };
-      });
-    });
-    req.on('error', error => {
-      reject('Error de solicitud: ' + error);
-    });
-    req.write(data);
-    req.end();
-  });
-  
+const ReplyMessages = async (data)=>{
+  const { telefono, emisor, fecha, leido, mensaje, user, tipo, message_id,filename } = data;
+  let mensajeId = '';
+  if (tipo === 'text') {
+    mensajeId = await SendReplyMessageWhatsApp(mensaje, telefono, message_id);
+  };
+  if (tipo === 'document') {
+    console.log('document',data);
+  };
+
+  const ultimo = await guardarReplyMensajeEnviado(telefono, user.uid, { emisor, fecha, leido, mensaje, tipo, mensajeId, context:{message_id}, filename});
+  return ultimo;
+}
+
+const SendReplyMessageWhatsApp = async (textResponse, number, id) => {
+  try {
+    const data = ReplyText(number, textResponse, id);
+    const res = await axios.post(`${urlMeta}/messages`, data, authFacebook);
+    if (res.status !== 200) {
+      return MensajeError('Error al enviar el mensaje en -->SendReplyMessage', res.statusText);
+    }
+    const {messages} = res.data;
+    console.log('id_Replymessage: ',messages[0].id);
+    return messages[0].id;  
+  } catch (error) {
+    return MensajeError('Error en -->SendReplyMessage', error);
+  }
 };
 
 const SendFileWhatsApp = async (data) => {
   try {
-    //guardar información para el envio de datos a facebook
-    const options = optionsMessage(data);
-
-    //enviar datos a facebook para reenviar mensaje al numero de teléfono
-    const req = https.request(options, res => {
-      res.on('data', d => {
-        process.stdout.write(d);
-      });
-    });
-    req.on('error', error => {
-      console.error('error: ', error);
-    });
-    req.write(data);
-    req.end();
+    const res = await axios.post(`${urlMeta}/messages`, data, authFacebook);
+    if (res.status !== 200) {
+      return MensajeError('Error al enviar el mensaje en -->SendReplyMessage', res.statusText);
+    };
+    const {messages} = res.data;
+    console.log('id_FileMessage: ',messages[0].id);
+    return messages[0].id;  
   } catch (error) {
-    console.log(error);
-    return MensajeError('No se pudo enviar el documento', error);
+    return MensajeError('Error en -->SendReplyMessage', error);
   };
-}
+};
 
-const SetFileWhatsApp = async (filename, mimetype, telefono, pathFile) => {
+const SendReplyFileWhatsApp = async (data) => {
+  try {
+    const dataReply = ReplyDocument(data);
+    const res = await axios.post(`${urlMeta}/messages`, dataReply, authFacebook);
+    if (res.status !== 200) {
+      return MensajeError('Error al enviar el mensaje en -->SendReplyMessage', res.statusText);
+    }
+    const {messages} = res.data;
+    console.log('id_ReplyFileMessage: ',messages[0].id);
+    return messages[0].id;  
+  } catch (error) {
+    return MensajeError('Error en -->SendReplyMessage', error);
+  }
+};
+
+const SetFileWhatsApp = async (filename, mimetype) => {
   const ruta = path.join(__dirname, 'uploads/', filename);
   const formData = new FormData();
   formData.append('file', (ruta));
@@ -157,8 +182,9 @@ const SetFileWhatsApp = async (filename, mimetype, telefono, pathFile) => {
   };
 };
 
-const GuardarMensajeRecibido = async (id, texto, telefono, tipo, urlDocumento, filename) => {
+const GuardarMensajeRecibido = async (id, texto, telefono, tipo,context, urlDocumento, filename) => {
   try {
+    console.log('guardad mensaje recibido', id, texto, telefono, tipo, urlDocumento, filename);
     const mensaje = {
       fecha: newFecha(),
       emisor: 'Paciente',
@@ -168,6 +194,7 @@ const GuardarMensajeRecibido = async (id, texto, telefono, tipo, urlDocumento, f
       mensaje: texto,
       mensajeId: id,
       leido: false,
+      context,
     };
     const paciente = await Paciente.findOneAndUpdate(
       { telefono },
@@ -185,22 +212,31 @@ const GuardarMensajeRecibido = async (id, texto, telefono, tipo, urlDocumento, f
   };
 };
 
+const MensajeLeido = async(id)=>{
+  try {
+    const data = MessageStatus(id);
+    const res = await axios.post(`${urlMeta}/messages`, data, authFacebook);
+    if (res.status !== 200) {
+      return MensajeError('Error al enviar el mensaje en -->MensajeLeido', res.statusText);
+    };
+    const {status} = res.data;
+    if (status) console.log('Mensajes leidos por Escotel');
+    return messages[0].id;  
+  } catch (error) {
+    return MensajeError('Error en -->MensajeLeido', error);
+  };
+}
+
 
 module.exports = {
   GuardarMensajeRecibido,
+  MensajeLeido,
+  ReplyMessages,
   SendFileWhatsApp,
+  SendReplyFileWhatsApp,
+  SendReplyMessageWhatsApp,
   SendMessageWhatsApp,
   SetFileWhatsApp,
   VerifyToken,
   Whatsapp,
-}
-
-// {
-//   "messaging_product": "whatsapp",
-//   "contacts": [
-//     { "input": "52155555555555", "wa_id": "521555555555555" }
-//   ],
-//   "messages": [
-//     { "id": "wamid.id" }
-//   ]
-// }
+};

@@ -5,8 +5,8 @@ const { dbConnection } = require('../database/config');
 const socketio = require('socket.io');
 const { comprobarJWT } = require('../helpers/jwt');
 const { obtenerPendientes, agregarPendiente, agregarDesdePaciente } = require('../controller/sinAsignar');
-const { obtenerPacientesPorUsuario, agregarPaciente, obtenerConversacionActual, guardarMensajeEnviado, quitarUsuario, reasignarPaciente } = require('../controller/paciente');
-const { SendMessageWhatsApp } = require('../controller/whatsapp');
+const { obtenerPacientesPorUsuario, agregarPaciente, obtenerConversacionActual, guardarMensajeEnviado, quitarUsuario, reasignarPaciente, guardarReplyMensajeEnviado } = require('../controller/paciente');
+const { SendMessageWhatsApp, SendReplyMessageWhatsApp } = require('../controller/whatsapp');
 const { actulizarEstado } = require('../controller/usuario');
 
 const app = express();
@@ -67,11 +67,23 @@ io.on('connection', async (socket) => {
   });
 
   socket.on('mensaje-enviado', async (data, callback) => {
-    const { telefono, emisor, fecha, leido, mensaje, user, tipo } = data;
-    const mensajeId = await SendMessageWhatsApp(mensaje, telefono);
-    const ultimo = await guardarMensajeEnviado(telefono, user.uid, { emisor, fecha, leido, mensaje, tipo, mensajeId } );
-    callback(ultimo);
-    socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.uid));
+    try {
+      const { telefono, emisor, fecha, leido, mensaje, user, tipo, message_id } = data;
+      let mensajeId = '';
+      if (message_id?.startsWith('wamid.')) {
+        mensajeId = await SendReplyMessageWhatsApp(mensaje, telefono, message_id);
+        const ultimo = await guardarReplyMensajeEnviado(telefono, user.uid, { emisor, fecha, leido, mensaje, tipo, mensajeId, context:{message_id}});
+        callback(ultimo);
+      } else {
+        mensajeId = await SendMessageWhatsApp(mensaje, telefono);
+        const ultimo = await guardarMensajeEnviado(telefono, user.uid, { emisor, fecha, leido, mensaje, tipo, mensajeId });
+        callback(ultimo);
+      };
+      socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.uid));
+      
+    } catch (error) {
+      console.log(error);
+    };
   });
 
   socket.on('liberar-paciente', async (data, callback) => {
@@ -79,12 +91,12 @@ io.on('connection', async (socket) => {
     const pacienteSinAsignar = await quitarUsuario(telefono, pacienteUid);
     if (pacienteSinAsignar.err) {
       callback(pacienteSinAsignar.err);
-      return ;
+      return;
     };
     const agregarSinAsignar = await agregarDesdePaciente(pacienteSinAsignar.paciente);
     if (!agregarSinAsignar.ok) {
-      callback(agregarSinAsignar.err);  
-      return ;
+      callback(agregarSinAsignar.err);
+      return;
     }
     callback(agregarSinAsignar);
     io.to(userUid).emit('mis-mensajes', await obtenerPacientesPorUsuario(userUid));
@@ -101,7 +113,7 @@ io.on('connection', async (socket) => {
         io.emit('mensajes-sinAsignar', await obtenerPendientes());
         callback(reasignar);
         // console.log('reasignar');
-        return ;
+        return;
       };
     };
     const reasignar = await reasignarPaciente(telefono, nuevoUsuario, anteriorUsuario, pacienteUid);
@@ -110,9 +122,9 @@ io.on('connection', async (socket) => {
       io.to(nuevoUsuario.uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(nuevoUsuario.uid));
       // console.log('reasignar');
       callback(reasignar);
-      return ;
+      return;
     };
-    callback({err:'No se pudo reasignar el paciente'});
+    callback({ err: 'No se pudo reasignar el paciente' });
   });
 
   socket.on('cambiar-estado', async (data, callback) => {
