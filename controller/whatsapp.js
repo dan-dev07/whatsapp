@@ -17,12 +17,12 @@ const { typeMessages } = require('../cons/typeMessages');
 
 const processMessage = async (req, messages, additionalData = {}) => {
   const { type, from, id, context } = messages;
-  console.log('context: ',context);
+  // console.log('context: ',context);
   const number = numeroTelefono(from);
   const messageContent = type === 'text' ? messages['text']['body'] : typeMessages[type];
   const resExistente = await buscarNumeroExistente(number);
   if (resExistente.ok === false) {
-    const respPendientes = await agregarPendiente(id, messageContent, number, type,...Object.values(additionalData));
+    const respPendientes = await agregarPendiente(id, messageContent, number, type, context, ...Object.values(additionalData));
     if (!respPendientes.err) {
       req.io.emit('mensajes-sinAsignar', await obtenerPendientes());
     };
@@ -49,8 +49,8 @@ const Whatsapp = async (req, res = response) => {
       if (type === 'text') {
         await processMessage(req, messages);
       } else {
-        const { ruta, filename } = await rutaDescargaArchivoRecibido(messages);
-        await processMessage(req, messages, { ruta, filename });
+        const { ruta, filename, caption } = await rutaDescargaArchivoRecibido(messages);
+        await processMessage(req, messages, { ruta, filename, caption });
       };
     };
     res.send('EVENT_RECEIVED');
@@ -84,7 +84,7 @@ const SendMessageWhatsApp = async (textResponse, number) => {
       return MensajeError('Error al enviar el mensaje en -->SendMessage', res.statusText);
     }
     const {messages} = res.data;
-    console.log('messageId: ',messages[0].id);
+    // console.log('messageId: ',messages[0].id);
     return messages[0].id;  
   } catch (error) {
     return MensajeError('Error en -->SendReplyMessage', error);
@@ -98,7 +98,7 @@ const ReplyMessages = async (data)=>{
     mensajeId = await SendReplyMessageWhatsApp(mensaje, telefono, message_id);
   };
   if (tipo === 'document') {
-    console.log('document',data);
+    // console.log('document',data);
   };
 
   const ultimo = await guardarReplyMensajeEnviado(telefono, user.uid, { emisor, fecha, leido, mensaje, tipo, mensajeId, context:{message_id}, filename});
@@ -113,7 +113,7 @@ const SendReplyMessageWhatsApp = async (textResponse, number, id) => {
       return MensajeError('Error al enviar el mensaje en -->SendReplyMessage', res.statusText);
     }
     const {messages} = res.data;
-    console.log('id_Replymessage: ',messages[0].id);
+    // console.log('id_Replymessage: ',messages[0].id);
     return messages[0].id;  
   } catch (error) {
     return MensajeError('Error en -->SendReplyMessage', error);
@@ -127,7 +127,7 @@ const SendFileWhatsApp = async (data) => {
       return MensajeError('Error al enviar el mensaje en -->SendReplyMessage', res.statusText);
     };
     const {messages} = res.data;
-    console.log('id_FileMessage: ',messages[0].id);
+    // console.log('id_FileMessage: ',messages[0].id);
     return messages[0].id;  
   } catch (error) {
     return MensajeError('Error en -->SendReplyMessage', error);
@@ -142,7 +142,7 @@ const SendReplyFileWhatsApp = async (data) => {
       return MensajeError('Error al enviar el mensaje en -->SendReplyMessage', res.statusText);
     }
     const {messages} = res.data;
-    console.log('id_ReplyFileMessage: ',messages[0].id);
+    // console.log('id_ReplyFileMessage: ',messages[0].id);
     return messages[0].id;  
   } catch (error) {
     return MensajeError('Error en -->SendReplyMessage', error);
@@ -177,15 +177,16 @@ const SetFileWhatsApp = async (filename, mimetype) => {
   };
 };
 
-const GuardarMensajeRecibido = async (id, texto, telefono, tipo,context, urlDocumento, filename) => {
+const GuardarMensajeRecibido = async (id, texto, telefono, tipo,context, urlDocumento, filename, caption) => {
   try {
-    console.log('guardad mensaje recibido', id, texto, telefono, tipo, urlDocumento, filename);
+    // console.log('guardad mensaje recibido', id, texto, telefono, tipo, urlDocumento, filename);
     const mensaje = {
       fecha: newFecha(),
       emisor: 'Paciente',
       tipo,
       filename,
       urlDocumento,
+      caption,
       mensaje: texto,
       mensajeId: id,
       leido: false,

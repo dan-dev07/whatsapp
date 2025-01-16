@@ -11,12 +11,15 @@ const numeroTelefono = (number) => {
 
 const rutaDescargaArchivoRecibido = async (messages) => {
   const { type: tipo, from: telefono } = messages;
+  let caption;
   let id;
   let filename;
   if (tipo === 'image') {
     id = messages['image']['id'];
+    caption = messages['image']['caption'];
   } else if (tipo === 'document') {
     id = messages['document']['id'];
+    caption = messages['document']['caption'];
     filename = messages['document']['filename'];
   } else if (tipo === 'audio') {
     id = messages['audio']['id'];
@@ -34,7 +37,8 @@ const rutaDescargaArchivoRecibido = async (messages) => {
     return {
       ruta,
       filename,
-      id
+      id,
+      caption
     };
 
   } catch (error) {
@@ -101,7 +105,7 @@ const mostrarDatosEntradaWhatsapp = (data) => {
 
         // Extraemos los mensajes
         value.messages.forEach(message => {
-          console.log(message);
+          // console.log(message);
           result.push({
             from: message.from,
             messageId: message.id,

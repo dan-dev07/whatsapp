@@ -41,7 +41,29 @@ const SinAsignarSchema = Schema({
       type:String,
       required:true,
       trim:true
-    }
+    },
+    caption:{
+      type:String,
+      required:false,
+      trim:true
+    },
+    context:{
+      message_id:{
+        type:String,
+        required:false,
+        trim:true
+      },
+      from:{
+        type:String,
+        required:false,
+        trim:true,
+      },
+      id:{
+        type:String,
+        required:false,
+        trim:true
+      }
+    },
   }]
 });
 

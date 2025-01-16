@@ -10,7 +10,7 @@ const AZURE_STORAGE_CONNECTION_STRING = process.env.AZURE_CONNECTION_STRING;
 const containerName = 'data';
 
 const cargarArchivo =async(buffer, telefono, id, tipo, filename)=>{
-  console.log(buffer, telefono, id, tipo, filename);
+  // console.log(buffer, telefono, id, tipo, filename);
   try {
     let blobName;
     if (tipo === 'image') {
@@ -36,7 +36,7 @@ const cargarArchivo =async(buffer, telefono, id, tipo, filename)=>{
   
     // Subir el blob
     await blockBlobClient.uploadData(buffer);
-    console.log(`El archivo se ha subido a ${blobName} en el contenedor ${containerName}`);
+    // console.log(`El archivo se ha subido a ${blobName} en el contenedor ${containerName}`);
     return blobName;
     
   } catch (error) {

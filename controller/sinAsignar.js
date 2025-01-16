@@ -33,11 +33,11 @@ const obtenerPendientes = async () => {
   }
 };
 
-const agregarPendiente = async (id, mensaje, telefono, tipo, urlDocumento, filename, emisor='Paciente')=>{
+const agregarPendiente = async (id, mensaje, telefono, tipo, context, urlDocumento, filename, caption,emisor='Paciente' )=>{
   try {
     const fecha = newFecha();
     const uid = uuidv4();
-    const mensajes = { fecha, emisor, tipo, urlDocumento, filename, mensaje, mensajeId:id};
+    const mensajes = { fecha, emisor, tipo, urlDocumento, filename, mensaje, mensajeId:id, context, caption};
     // buscar en pendientes y actualizar
     const mensajePaciente = await SinAsignar.findOne({ telefono });
     if (!mensajePaciente) {
