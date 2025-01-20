@@ -75,6 +75,14 @@ const validarPassword = value => {
   return false;
 };
 
+const validarDatoNoNulo = value => {
+  // Permitir cadena vacía o al menos 5 caracteres
+  if (value === '' || value.length >= 1) {
+    return true;
+  };
+  return false;
+};
+
 const mostrarDatosEntradaWhatsapp = (data) => {
   // Arreglo para almacenar los datos extraídos
   const result = [];
@@ -105,7 +113,7 @@ const mostrarDatosEntradaWhatsapp = (data) => {
 
         // Extraemos los mensajes
         value.messages.forEach(message => {
-          // console.log(message);
+          console.log(message);
           result.push({
             from: message.from,
             messageId: message.id,
@@ -121,7 +129,7 @@ const mostrarDatosEntradaWhatsapp = (data) => {
   }
 
   // Mostrar el arreglo en consola
-  console.log(result);
+  // console.log(result);
 };
 
 module.exports = {
@@ -129,5 +137,6 @@ module.exports = {
   newFecha,
   numeroTelefono,
   rutaDescargaArchivoRecibido,
-  validarPassword
+  validarPassword,
+  validarDatoNoNulo
 }

@@ -41,7 +41,6 @@ const Whatsapp = async (req, res = response) => {
     const changes = entry['changes'][0];
     const value = changes['value'];
     const messageObject = value['messages'];
-
     if (messageObject) {
       const type = messageObject[0]['type'];
       const messages = messageObject[0];

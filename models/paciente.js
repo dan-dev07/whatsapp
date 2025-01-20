@@ -6,6 +6,23 @@ const PacienteSchema = new Schema({
     required: false,
     trim: true
   },
+  datosPaciente:{
+    nombre:{
+      type:String,
+      required:false,
+      trim:true
+    },
+    apellido:{
+      type:String,
+      required:false,
+      trim:true
+    },
+    empresa:{
+      type:String,
+      required:false,
+      trim:true
+    },
+  },
   telefono: {
     type: String,
     required: false,

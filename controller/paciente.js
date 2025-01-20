@@ -6,12 +6,12 @@ const { MensajeError } = require('../helpers/error');
 
 const agregarPaciente = async (datos) => {
   try {
-    const { telefono, userUid, pacienteUid, ultimaComunicacion } = datos;
+    const { telefono, userUid, pacienteUid, ultimaComunicacion, datosPaciente } = datos;
     const user = await Usuario.findOne({ uid: userUid })
     const pendiente = await SinAsignar.findOne({ telefono, uid: pacienteUid });
     const chats = pendiente.mensajes;
-    const paciente = await Paciente.create({ nombrePaciente: pendiente.nombrePaciente, telefono, uid: pacienteUid, usuarioAsignado: user, ultimaComunicacion, chats });
-    await SinAsignar.findOneAndDelete({ telefono });
+    const paciente = await Paciente.create({ nombrePaciente: pendiente.nombrePaciente, telefono, uid: pacienteUid, usuarioAsignado: user, ultimaComunicacion, chats, datosPaciente });
+    await SinAsignar.findOneAndDelete({ telefono, uid:pacienteUid });
     return ({
       paciente
     });
@@ -24,10 +24,10 @@ const agregarPaciente = async (datos) => {
 const obtenerPacientesPorUsuario = async (uid) => {
   try {
     const pacientesPorUsuario = (await Paciente.find({ 'usuarioAsignado.uid': uid })).map(p => {
-      const { nombrePaciente, telefono, chats, uid } = p;
+      const { nombrePaciente, telefono, chats, uid, datosPaciente } = p;
       const ultimoMsg = chats[chats.length - 1];
       const { fecha, mensaje, leido, tipo, emisor } = ultimoMsg;
-      return { nombrePaciente, telefono, uid, fecha, mensaje, leido, tipo, emisor };
+      return { nombrePaciente, telefono, uid, fecha, mensaje, leido, tipo, emisor, datosPaciente };
     });
     return pacientesPorUsuario.sort((a, b) => a.leido - b.leido);
   } catch (error) {

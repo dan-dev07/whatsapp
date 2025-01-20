@@ -2,7 +2,6 @@ const { response } = require('express');
 const Paciente = require('../models/paciente');
 const SinAsignar = require('../models/sinAsignar');
 const { obtenerPacientesPorUsuario } = require('./paciente');
-const { MensajeLeido } = require('./whatsapp');
 
 const allMessages = async (req, res = response) => {
   try {
@@ -15,6 +14,7 @@ const allMessages = async (req, res = response) => {
         uid:m.uid,
         telefono:m.telefono,
         fecha: ultimo.fecha,
+        datosPaciente:m.datosPaciente,
         usuario:{
           nombre:'', 
           // email:'', 
@@ -32,6 +32,7 @@ const allMessages = async (req, res = response) => {
         uid: m.uid,
         telefono: m.telefono,
         fecha,
+        datosPaciente: m.datosPaciente,
         usuario: {
           nombre:usuarioAsignado.nombre,
           // email:usuarioAsignado.email,
@@ -62,11 +63,10 @@ const getChat = async (req, res = response)=>{
       return c;
     });
     const pacienteActualizado = await Paciente.findOneAndUpdate({ telefono, 'usuarioAsignado.uid': uid }, { chats: mensajesLeidos }, { new: true });
-    const { chats: chatsAct } = pacienteActualizado;
-    // console.log('Enviado');
-    // MensajeLeido(chatsAct[chatsAct.length - 1].mensajeId);
+    const { chats: chatsAct, datosPaciente } = pacienteActualizado;
+    console.log('Enviado: ', datosPaciente);
     req.io.to(uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(uid));
-    res.send( chatsAct );
+    res.send( {chatsAct,datosPaciente} );
   } catch (error) {
     console.log(error);
     res.status(500).json({
@@ -74,7 +74,28 @@ const getChat = async (req, res = response)=>{
     });
   };
 };
+
+const agregarDatosContactoPaciente = async (req, res = response)=>{
+  try {
+    const {nombre, apellido, empresa, telefono, uid} = req.body;
+
+    const pacienteActualizado = await Paciente.findOneAndUpdate({ telefono, 'usuarioAsignado.uid': uid }, {datosPaciente:{
+      nombre, 
+      apellido,
+      empresa,
+    }}, { new: true });
+    req.io.to(uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(uid));
+    res.send( pacienteActualizado );
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      response: 'No se pudo cargar la conversación'
+    });
+  }
+}
+
 module.exports = {
+  agregarDatosContactoPaciente,
   allMessages,
   getChat,
 }
