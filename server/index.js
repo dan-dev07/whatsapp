@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3000;
 const server = require('http').createServer(app);
 const io = socketio(server, {
   cors: {
-    origin: ['189.131.182.61:5173', 'http://localhost:5173'],
+    origin: ['https://wa.altaespecialidad.escotel.mx'],
     credentials: true,
   }
 });
