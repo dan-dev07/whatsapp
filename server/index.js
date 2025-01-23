@@ -1,5 +1,6 @@
 //Servidor Express
 const express = require('express');
+process.loadEnvFile();
 const cors = require('cors');
 const { dbConnection } = require('../database/config');
 const socketio = require('socket.io');
@@ -73,11 +74,11 @@ io.on('connection', async (socket) => {
       if (message_id?.startsWith('wamid.')) {
         mensajeId = await SendReplyMessageWhatsApp(mensaje, telefono, message_id);
         const ultimo = await guardarReplyMensajeEnviado(telefono, user.uid, { emisor, fecha, leido, mensaje, tipo, mensajeId, context:{message_id}});
-        callback(ultimo);
+        callback(ultimo,telefono);
       } else {
         mensajeId = await SendMessageWhatsApp(mensaje, telefono);
         const ultimo = await guardarMensajeEnviado(telefono, user.uid, { emisor, fecha, leido, mensaje, tipo, mensajeId });
-        callback(ultimo);
+        callback(ultimo,telefono);
       };
       socket.emit('mis-mensajes', await obtenerPacientesPorUsuario(user.uid));
       
