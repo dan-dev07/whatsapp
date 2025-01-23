@@ -35,6 +35,7 @@ const processMessage = async (req, messages, additionalData = {}) => {
 };
 
 const Whatsapp = async (req, res = response) => {
+  //Aqui empieza con la llegada de los mensajes desde whatsapp
   try {
     mostrarDatosEntradaWhatsapp(req.body);
     const entry = req.body['entry'][0];
@@ -86,7 +87,7 @@ const SendMessageWhatsApp = async (textResponse, number) => {
     // console.log('messageId: ',messages[0].id);
     return messages[0].id;  
   } catch (error) {
-    return MensajeError('Error en -->SendReplyMessage', error);
+    return MensajeError('Error en -->SendMessageWhatsApp', error);
   };
 };
 
@@ -115,7 +116,7 @@ const SendReplyMessageWhatsApp = async (textResponse, number, id) => {
     // console.log('id_Replymessage: ',messages[0].id);
     return messages[0].id;  
   } catch (error) {
-    return MensajeError('Error en -->SendReplyMessage', error);
+    return MensajeError('Error en -->SendReplyMessageWhatsApp', error);
   }
 };
 
@@ -129,7 +130,7 @@ const SendFileWhatsApp = async (data) => {
     // console.log('id_FileMessage: ',messages[0].id);
     return messages[0].id;  
   } catch (error) {
-    return MensajeError('Error en -->SendReplyMessage', error);
+    return MensajeError('Error en -->SendFileWhatsApp', error);
   };
 };
 
@@ -144,7 +145,7 @@ const SendReplyFileWhatsApp = async (data) => {
     // console.log('id_ReplyFileMessage: ',messages[0].id);
     return messages[0].id;  
   } catch (error) {
-    return MensajeError('Error en -->SendReplyMessage', error);
+    return MensajeError('Error en -->SendReplyFileWhatsApp', error);
   }
 };
 
