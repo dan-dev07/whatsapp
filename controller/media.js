@@ -72,9 +72,11 @@ const enviarArchivo = async (req, uidUser, data, telefono, rutaBlobname, text, f
     const res = await guardarArchivoEnviado(telefono, uidUser, rutaBlobname, text, filename)
     if (res.ok) {
       //si el archivo se guarda correctamente, enviar el mensaje 
-      req.io.to(uidUser).emit('archivo-enviado', res.ultimo);
+      req.io.to(uidUser).emit('archivo-enviado', ({ultimo:res.ultimo, telefono}));
       await SendFileWhatsApp(data);
-    };
+    }else{
+      req.io.to(uidUser).emit('archivo-enviado', ({ultimo:res.error, telefono}));
+    }
   } catch (error) {
     console.log(error);
   };
