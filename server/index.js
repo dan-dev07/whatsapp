@@ -1,7 +1,7 @@
 //Servidor Express
 const express = require('express');
-process.loadEnvFile();
 const cors = require('cors');
+require('dotenv').config();
 const { dbConnection } = require('../database/config');
 const socketio = require('socket.io');
 const { comprobarJWT } = require('../helpers/jwt');
