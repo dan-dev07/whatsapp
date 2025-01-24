@@ -83,8 +83,9 @@ const agregarDatosContactoPaciente = async (req, res = response)=>{
       apellido,
       empresa,
     }}, { new: true });
+    const {datosPaciente} = pacienteActualizado;
     req.io.to(uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(uid));
-    res.send( pacienteActualizado );
+    res.send( datosPaciente );
   } catch (error) {
     console.log(error);
     res.status(500).json({

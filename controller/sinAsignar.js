@@ -5,7 +5,6 @@ const SinAsignar = require('../models/sinAsignar');
 const obtenerPendientes = async () => {
   try {
     const pendientes = await SinAsignar.find();
-    // console.log('obtenerPendientes: ', mensajes)
     if (!pendientes) {
       return [];
     };
@@ -50,7 +49,6 @@ const agregarPendiente = async (id, mensaje, telefono, tipo, context, urlDocumen
       { $push: { mensajes } },
       { new: true }
     );
-    // console.log('Pendiente actualizado');
 
     return {ok:true};
   } catch (error) {
@@ -66,7 +64,6 @@ const agregarDesdePaciente =async (paciente)=>{
     const {chats, telefono, uid, datosPaciente} = paciente;
     const nuevoPendiente = await SinAsignar({telefono, uid, mensajes:chats, datosPaciente});
     nuevoPendiente.save();
-    // console.log('Paciente reasignado a Pendientes');
     if (!nuevoPendiente) {
       return {ok:false};
     };

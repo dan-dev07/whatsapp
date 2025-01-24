@@ -63,7 +63,6 @@ const newFecha = () => {
   // Formatear la fecha y hora
   const formatter = new Intl.DateTimeFormat('es-MX', options);
   const formattedDate = formatter.format(now);
-  // console.log('Hora actual en Ciudad de México:', formattedDate);
   return formattedDate;
 };
 
@@ -128,7 +127,7 @@ const mostrarDatosEntradaWhatsapp = (data) => {
   }
 
   // Mostrar el arreglo en consola
-  console.log('mostrarDatosArreglo',result);
+  // console.log('mostrarDatosArreglo',result);
 };
 
 module.exports = {

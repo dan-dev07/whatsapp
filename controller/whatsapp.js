@@ -16,7 +16,6 @@ const { typeMessages } = require('../cons/typeMessages');
 
 const processMessage = async (req, messages, additionalData = {}) => {
   const { type, from, id, context } = messages;
-  // console.log('context: ',context);
   const number = numeroTelefono(from);
   const messageContent = type === 'text' ? messages['text']['body'] : typeMessages[type];
   const resExistente = await buscarNumeroExistente(number);
@@ -41,7 +40,6 @@ const Whatsapp = async (req, res = response) => {
     const changes = entry['changes'][0];
     const value = changes['value'];
     const messageObject = value['messages'];
-    console.log('whatsapp',messageObject[0]);
     if (messageObject) {
       const type = messageObject[0]['type'];
       const messages = messageObject[0];
@@ -84,7 +82,6 @@ const SendMessageWhatsApp = async (textResponse, number) => {
       return MensajeError('Error al enviar el mensaje en -->SendMessage', res.statusText);
     }
     const {messages} = res.data;
-    // console.log('messageId: ',messages[0].id);
     return messages[0].id;  
   } catch (error) {
     return MensajeError('Error en -->SendMessageWhatsApp', error);
@@ -98,7 +95,6 @@ const ReplyMessages = async (data)=>{
     mensajeId = await SendReplyMessageWhatsApp(mensaje, telefono, message_id);
   };
   if (tipo === 'document') {
-    // console.log('document',data);
   };
 
   const ultimo = await guardarReplyMensajeEnviado(telefono, user.uid, { emisor, fecha, leido, mensaje, tipo, mensajeId, context:{message_id}, filename});
@@ -113,7 +109,6 @@ const SendReplyMessageWhatsApp = async (textResponse, number, id) => {
       return MensajeError('Error al enviar el mensaje en -->SendReplyMessage', res.statusText);
     }
     const {messages} = res.data;
-    // console.log('id_Replymessage: ',messages[0].id);
     return messages[0].id;  
   } catch (error) {
     return MensajeError('Error en -->SendReplyMessageWhatsApp', error);
@@ -141,7 +136,6 @@ const SendReplyFileWhatsApp = async (data) => {
       return MensajeError('Error al enviar el mensaje en -->SendReplyFileWhatsApp', res.statusText);
     }
     const {messages} = res.data;
-    // console.log('id_ReplyFileMessage: ',messages[0].id);
     return messages[0].id;  
   } catch (error) {
     return MensajeError('Error en -->SendReplyFileWhatsApp', error);
@@ -178,7 +172,6 @@ const SetFileWhatsApp = async (filename, mimetype) => {
 
 const GuardarMensajeRecibido = async (id, texto, telefono, tipo,context, urlDocumento, filename, caption) => {
   try {
-    // console.log('guardad mensaje recibido', id, texto, telefono, tipo, urlDocumento, filename);
     const mensaje = {
       fecha: newFecha(),
       emisor: 'Paciente',
@@ -215,7 +208,6 @@ const MensajeLeido = async(id)=>{
       return MensajeError('Error al enviar el mensaje en -->MensajeLeido', res.statusText);
     };
     const {status} = res.data;
-    if (status) console.log('Mensajes leidos por Escotel');
     return messages[0].id;  
   } catch (error) {
     return MensajeError('Error en -->MensajeLeido', error);

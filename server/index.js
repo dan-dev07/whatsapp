@@ -106,13 +106,11 @@ io.on('connection', async (socket) => {
   socket.on('reasignar-paciente', async (data, callback) => {
     const { pacienteUid, telefono, nuevoUsuario, anteriorUsuario } = data;
     if (!anteriorUsuario || anteriorUsuario.nombre === '' || anteriorUsuario.email === '' || anteriorUsuario.uid === '') {
-      // console.log('asignar nuevo');
       const reasignar = await reasignarPaciente(telefono, nuevoUsuario, null, pacienteUid);
       if (reasignar.ok) {
         io.to(nuevoUsuario.uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(nuevoUsuario.uid));
         io.emit('mensajes-sinAsignar', await obtenerPendientes());
         callback(reasignar);
-        // console.log('reasignar');
         return;
       };
     };
@@ -120,7 +118,6 @@ io.on('connection', async (socket) => {
     if (reasignar.ok) {
       io.to(anteriorUsuario.uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(anteriorUsuario.uid));
       io.to(nuevoUsuario.uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(nuevoUsuario.uid));
-      // console.log('reasignar');
       callback(reasignar);
       return;
     };

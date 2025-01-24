@@ -56,7 +56,6 @@ const guardarMensajeEnviado = async (telefono, uid, mensaje) => {
 
 const guardarReplyMensajeEnviado = async (telefono, uid, mensaje) => {
   try {
-    console.log("guardarReplyMensaje",mensaje);
     const paciente = await Paciente.findOneAndUpdate(
       { telefono, 'usuarioAsignado.uid': uid },
       {
@@ -125,7 +124,6 @@ const obtenerConversacionActual = async (telefono, uid) => {
 const buscarNumeroExistente = async (telefono) => {
   try {
     const numeroExistente = await Paciente.findOne({ telefono });
-    // console.log('numeroExistente: ', numeroExistente);
     if (!numeroExistente) {
       return {
         ok: false,
@@ -167,7 +165,6 @@ const reasignarPaciente = async (telefono, nuevoUsuario, anteriorUsuario, pacien
       if (!nuevoPaciente) {
         return { ok: false };
       };
-      // console.log('paciente asignado');
       return { ok: true };
     };
     const user = await Usuario.findOne({ uid: nuevoUsuario.uid });
@@ -176,7 +173,6 @@ const reasignarPaciente = async (telefono, nuevoUsuario, anteriorUsuario, pacien
       { usuarioAsignado: user },
       { new: true }
     );
-    // console.log('paciente reasignado');
     if (!pacienteActualizado) {
       return { ok: false };
     }
