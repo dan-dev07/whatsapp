@@ -69,11 +69,11 @@ const upload = multer({ storage });
 
 const enviarArchivo = async (req, uidUser, data, telefono, rutaBlobname, text, filename) => {
   try {
-    const res = await guardarArchivoEnviado(telefono, uidUser, rutaBlobname, text, filename)
+    const mensaje = await SendFileWhatsApp(data);
+    const res = await guardarArchivoEnviado(telefono, mensaje, uidUser, rutaBlobname, text, filename);
     if (res.ok) {
       //si el archivo se guarda correctamente, enviar el mensaje 
       req.io.to(uidUser).emit('archivo-enviado', ({ultimo:res.ultimo, telefono}));
-      await SendFileWhatsApp(data);
     }else{
       req.io.to(uidUser).emit('archivo-enviado', ({ultimo:res.error, telefono}));
     }
@@ -86,9 +86,8 @@ const subirArchivo = async (req, res = express.response) => {
   try {
     const { filename, mimetype, path } = req.file;
     const { telefono, uidUser } = req.body;
-    const { id } = await SetFileWhatsApp(filename, mimetype, telefono, path);
+    const { id } = await SetFileWhatsApp(filename, mimetype);
     const rutaBlobname = await cargarArchivo(filename, mimetype, telefono);
-
     if (mimetype.includes("image")) {
       const data = SampleImage(telefono, id);
       await enviarArchivo(req, uidUser, data, telefono, rutaBlobname, 'image');
@@ -96,7 +95,7 @@ const subirArchivo = async (req, res = express.response) => {
       const data = SampleDocument(telefono, id, filename);
       await enviarArchivo(req, uidUser, data, telefono, rutaBlobname, 'document', filename);
     };
-    res.send('Archivo recibido');
+    res.status(200).send(id);
   } catch (error) {
     res.status(500).json({
       response: 'Hubo un error al regresar la descarga'

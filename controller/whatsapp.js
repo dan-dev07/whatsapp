@@ -127,8 +127,7 @@ const SendFileWhatsApp = async (data) => {
       return MensajeError('Error al enviar el mensaje en -->SendFileWhatsApp', res.statusText);
     };
     const {messages} = res.data;
-    // console.log('id_FileMessage: ',messages[0].id);
-    return messages[0].id;  
+    return messages[0];  
   } catch (error) {
     return MensajeError('Error en -->SendFileWhatsApp', error);
   };

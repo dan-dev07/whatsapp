@@ -41,6 +41,22 @@ const SampleImage =(number, id)=>{
   return data;
 };
 
+const ReplyImage =(number, id)=>{
+  const data = JSON.stringify({
+    "messaging_product": "whatsapp",
+    "recipient_type": "individual",
+    "to": number,
+    "context": {
+        "message_id": id
+    },
+    "type": "image",
+    "image": {
+        "id": "<IMAGE_OBJECT_ID>"
+    }
+  });
+  return data;
+};
+
 const SampleAudio =(number, id)=>{
   const data = JSON.stringify({
     "messaging_product": "whatsapp",
@@ -149,6 +165,7 @@ const SampleButton =(number)=>{
 module.exports ={
   MessageStatus,
   ReplyDocument,
+  ReplyImage,
   ReplyText,
   SampleAudio,
   SampleButton,

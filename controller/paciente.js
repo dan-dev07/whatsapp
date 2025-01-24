@@ -73,21 +73,22 @@ const guardarReplyMensajeEnviado = async (telefono, uid, mensaje) => {
   };
 };
 
-const guardarArchivoEnviado = async (telefono, uid, urlDocumento, tipo, filename) => {
+const guardarArchivoEnviado = async (telefono, mensaje, uid, urlDocumento, tipo, filename) => {
   try {
     const fecha = newFecha();
-    const mensaje = {
+    const nuevoMensaje = {
       fecha,
       emisor: 'Escotel',
       tipo,
       filename,
       urlDocumento,
       mensaje: tipo === 'image' ? "Imagen enviado" : "Documento enviado",
+      mensajeId:mensaje.id,
       leido: false,
     }
     const paciente = await Paciente.findOneAndUpdate(
       { telefono, 'usuarioAsignado.uid': uid },
-      { $push: { chats: mensaje } },
+      { $push: { chats: nuevoMensaje } },
       { new: true });
     const ultimo = paciente.chats[paciente.chats.length - 1];
     return {
