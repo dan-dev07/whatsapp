@@ -41,9 +41,10 @@ const Whatsapp = async (req, res = response) => {
     const changes = entry['changes'][0];
     const value = changes['value'];
     const messageObject = value['messages'];
+    console.log('whatsapp',messageObject[0].messages);
     if (messageObject) {
       const type = messageObject[0]['type'];
-      const messages = messageObject[0];ç
+      const messages = messageObject[0];
 
       if (type === 'text') {
         await processMessage(req, messages);

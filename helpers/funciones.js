@@ -113,14 +113,13 @@ const mostrarDatosEntradaWhatsapp = (data) => {
 
         // Extraemos los mensajes
         value.messages.forEach(message => {
-          console.log(message);
-          // result.push({
-          //   from: message.from,
-          //   messageId: message.id,
-          //   timestamp: dayjs(message.Timestamp).format('DD/MM/YYYY'),// Convertir timestamp a fecha
-          //   type: message.type,
-          //   [message.type]: [message.type].id
-          // });
+          result.push({
+            from: message.from,
+            messageId: message.id,
+            timestamp: dayjs(message.Timestamp).format('DD/MM/YYYY'),// Convertir timestamp a fecha
+            type: message.type,
+            [message.type]: [message.type].id
+          });
         });
       });
     });
@@ -129,7 +128,7 @@ const mostrarDatosEntradaWhatsapp = (data) => {
   }
 
   // Mostrar el arreglo en consola
-  // console.log(result);
+  console.log('mostrarDatosArreglo',result);
 };
 
 module.exports = {
