@@ -95,13 +95,13 @@ const mostrarDatosEntradaWhatsapp = (data) => {
         const value = change.value;
 
         // Datos principales de la entrada
-        // result.push({
-        //   object: data.object,
-        //   entryId: entry.id,
-        //   messagingProduct: value.messaging_product,
-        //   displayPhoneNumber: value.metadata.display_phoneNumber,
-        //   phoneNumberId: value.metadata.phone_number_Id
-        // });
+        result.push({
+          object: data.object,
+          entryId: entry.id,
+          messagingProduct: value.messaging_product,
+          displayPhoneNumber: value.metadata.display_phoneNumber,
+          phoneNumberId: value.metadata.phone_number_Id
+        });
 
         // Extraemos los contactos
         // value.contacts.forEach(contact => {
