@@ -1,7 +1,7 @@
-require('dotenv').config();
 const { BlobServiceClient } = require('@azure/storage-blob');
 const { MensajeError } = require('../error');
 const stream = require('stream');
+const { v4: uuidv4 } = require('uuid');
 
 // Configura tu conexión a Azure Blob Storage
 const AZURE_STORAGE_CONNECTION_STRING = process.env.AZURE_CONNECTION_STRING;
@@ -10,17 +10,18 @@ const AZURE_STORAGE_CONNECTION_STRING = process.env.AZURE_CONNECTION_STRING;
 const containerName = 'data';
 
 const cargarArchivo =async(buffer, telefono, id, tipo, filename)=>{
-  // console.log(buffer, telefono, id, tipo, filename);
+  
   try {
+    const idUuid = uuidv4();//Generar un id aleatorio para cada archivo al guardar
     let blobName;
     if (tipo === 'image') {
-      blobName = `${telefono}/${id}.jpg`;
+      blobName = `${telefono}/${idUuid}.jpg`;
     }else if (tipo === 'document') {
       blobName = `${telefono}/${filename}`;
     }else if(tipo === 'audio'){
-      blobName = `${telefono}/${id}.wav`
+      blobName = `${telefono}/${idUuid}.wav`
     }else if (tipo === 'video') {
-      blobName = `${telefono}/${id}.mp4`
+      blobName = `${telefono}/${idUuid}.mp4`
     }
     // Crear un cliente de servicio de blob
     const blobServiceClient = BlobServiceClient.fromConnectionString(AZURE_STORAGE_CONNECTION_STRING);

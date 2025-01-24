@@ -3,7 +3,6 @@ const axios = require('axios');
 const https = require('https');
 const path = require('path');
 const FormData = require('form-data');
-require('dotenv').config();
 const fs = require('fs');
 const Paciente = require('../models/paciente');
 const { MensajeError } = require('../helpers/error');
@@ -37,11 +36,11 @@ const processMessage = async (req, messages, additionalData = {}) => {
 const Whatsapp = async (req, res = response) => {
   //Aqui empieza con la llegada de los mensajes desde whatsapp
   try {
-    mostrarDatosEntradaWhatsapp(req.body);
     const entry = req.body['entry'][0];
     const changes = entry['changes'][0];
     const value = changes['value'];
     const messageObject = value['messages'];
+    console.log(messageObject);
     if (messageObject) {
       const type = messageObject[0]['type'];
       const messages = messageObject[0];
@@ -124,7 +123,7 @@ const SendFileWhatsApp = async (data) => {
   try {
     const res = await axios.post(`${urlMeta}/messages`, data, authFacebook);
     if (res.status !== 200) {
-      return MensajeError('Error al enviar el mensaje en -->SendReplyMessage', res.statusText);
+      return MensajeError('Error al enviar el mensaje en -->SendFileWhatsApp', res.statusText);
     };
     const {messages} = res.data;
     // console.log('id_FileMessage: ',messages[0].id);
@@ -139,7 +138,7 @@ const SendReplyFileWhatsApp = async (data) => {
     const dataReply = ReplyDocument(data);
     const res = await axios.post(`${urlMeta}/messages`, dataReply, authFacebook);
     if (res.status !== 200) {
-      return MensajeError('Error al enviar el mensaje en -->SendReplyMessage', res.statusText);
+      return MensajeError('Error al enviar el mensaje en -->SendReplyFileWhatsApp', res.statusText);
     }
     const {messages} = res.data;
     // console.log('id_ReplyFileMessage: ',messages[0].id);

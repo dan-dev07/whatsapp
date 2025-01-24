@@ -1,7 +1,6 @@
 const stream = require('stream');
 const path = require('path');
 const fs = require('fs');
-require('dotenv').config();
 const { BlobServiceClient } = require('@azure/storage-blob');
 const { MensajeError } = require('../error');
 const { v4: uuidv4 } = require('uuid');
