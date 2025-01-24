@@ -95,32 +95,32 @@ const mostrarDatosEntradaWhatsapp = (data) => {
         const value = change.value;
 
         // Datos principales de la entrada
-        result.push({
-          object: data.object,
-          entryId: entry.id,
-          messagingProduct: value.messaging_product,
-          displayPhoneNumber: value.metadata.display_phoneNumber,
-          phoneNumberId: value.metadata.phone_number_Id
-        });
+        // result.push({
+        //   object: data.object,
+        //   entryId: entry.id,
+        //   messagingProduct: value.messaging_product,
+        //   displayPhoneNumber: value.metadata.display_phoneNumber,
+        //   phoneNumberId: value.metadata.phone_number_Id
+        // });
 
         // Extraemos los contactos
-        value.contacts.forEach(contact => {
-          result.push({
-            contactName: contact.profile.name,
-            waId: contact.wa_id
-          });
-        });
+        // value.contacts.forEach(contact => {
+        //   result.push({
+        //     contactName: contact.profile.name,
+        //     waId: contact.wa_id
+        //   });
+        // });
 
         // Extraemos los mensajes
         value.messages.forEach(message => {
           console.log(message);
-          result.push({
-            from: message.from,
-            messageId: message.id,
-            timestamp: dayjs(message.Timestamp).format('DD/MM/YYYY'),// Convertir timestamp a fecha
-            type: message.type,
-            [message.type]: [message.type].id
-          });
+          // result.push({
+          //   from: message.from,
+          //   messageId: message.id,
+          //   timestamp: dayjs(message.Timestamp).format('DD/MM/YYYY'),// Convertir timestamp a fecha
+          //   type: message.type,
+          //   [message.type]: [message.type].id
+          // });
         });
       });
     });

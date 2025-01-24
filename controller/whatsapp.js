@@ -36,14 +36,14 @@ const processMessage = async (req, messages, additionalData = {}) => {
 const Whatsapp = async (req, res = response) => {
   //Aqui empieza con la llegada de los mensajes desde whatsapp
   try {
+    mostrarDatosEntradaWhatsapp();
     const entry = req.body['entry'][0];
     const changes = entry['changes'][0];
     const value = changes['value'];
     const messageObject = value['messages'];
     if (messageObject) {
       const type = messageObject[0]['type'];
-      const messages = messageObject[0];
-      console.log(messages);
+      const messages = messageObject[0];ç
 
       if (type === 'text') {
         await processMessage(req, messages);
