@@ -42,15 +42,15 @@ const agregarPendiente = async (id, mensaje, telefono, tipo, context, urlDocumen
     const mensajePaciente = await SinAsignar.findOne({ telefono });
     if (!mensajePaciente) {
       //guardar mensaje
-      const agregarMensaje = await SinAsignar.create({ telefono, uid, mensajes });
-      return {ok:true};
+      const sinAsignar = await SinAsignar.create({ telefono, uid, mensajes });
+      return {ok:true, uid:sinAsignar.uid };
     };
     const res = await SinAsignar.findOneAndUpdate({ telefono },
       { $push: { mensajes } },
       { new: true }
     );
 
-    return {ok:true};
+    return {ok:true, uid:res.uid};
   } catch (error) {
     console.log(error);
     return {

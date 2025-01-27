@@ -6,13 +6,14 @@ const FormData = require('form-data');
 const fs = require('fs');
 const Paciente = require('../models/paciente');
 const { MensajeError } = require('../helpers/error');
-const { urlMeta } = require('../cons/urls');
-const { authFacebook } = require('../cons/optionsMessage');
 const { numeroTelefono, rutaDescargaArchivoRecibido, newFecha, mostrarDatosEntradaWhatsapp } = require('../helpers/funciones');
 const { buscarNumeroExistente, obtenerPacientesPorUsuario, guardarReplyMensajeEnviado } = require('./paciente');
 const { agregarPendiente, obtenerPendientes } = require('./sinAsignar');
 const { SampleText, ReplyText, ReplyDocument, MessageStatus } = require('../helpers/textTypes');
+const { allMessagesSocket } = require('./datos');
 const { typeMessages } = require('../cons/typeMessages');
+const { urlMeta } = require('../cons/urls');
+const { authFacebook } = require('../cons/optionsMessage');
 
 const processMessage = async (req, messages, additionalData = {}) => {
   const { type, from, id, context } = messages;
@@ -23,12 +24,14 @@ const processMessage = async (req, messages, additionalData = {}) => {
     const respPendientes = await agregarPendiente(id, messageContent, number, type, context, ...Object.values(additionalData));
     if (!respPendientes.err) {
       req.io.emit('mensajes-sinAsignar', await obtenerPendientes());
+      req.io.to(respPendientes.uid).emit('todos-los-mensajes', await allMessagesSocket()); //Probando para enviar datos
     };
   } else if (resExistente.ok) {
     const mensaje = await GuardarMensajeRecibido(id, messageContent, number, type, context, ...Object.values(additionalData));
     const { ultimoMsg, uid } = mensaje;
     req.io.to(uid).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
     req.io.to(uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(resExistente.usuarioAsignado.uid));
+    req.io.to(uid).emit('todos-los-mensajes', 'datos enviados');//probando para enviar datos
   };
 };
 

@@ -2,6 +2,7 @@ const { response } = require('express');
 const Paciente = require('../models/paciente');
 const SinAsignar = require('../models/sinAsignar');
 const { obtenerPacientesPorUsuario } = require('./paciente');
+const { MensajeError } = require('../helpers/error');
 
 const allMessages = async (req, res = response) => {
   try {
@@ -51,6 +52,52 @@ const allMessages = async (req, res = response) => {
   };
 };
 
+const allMessagesSocket = async () => {
+  try {
+    const mensajesPacientes = await Paciente.find();
+    const pendientes = await SinAsignar.find();
+    const arregloPendientes = pendientes.map(m => {
+      const { mensajes } = m;
+      const ultimo = mensajes[mensajes.length - 1];
+      return {
+        uid:m.uid,
+        telefono:m.telefono,
+        fecha: ultimo.fecha,
+        datosPaciente:m.datosPaciente,
+        usuario:{
+          nombre:'', 
+          // email:'', 
+          uid:''
+        }
+      }
+    });
+
+    const arregloPacientes = mensajesPacientes.map((m) => {
+      const { usuarioAsignado, chats } = m;
+      const fecha = chats[chats.length - 1].fecha;
+
+      return {
+        nombrepaciente:m.nombrePaciente,
+        uid: m.uid,
+        telefono: m.telefono,
+        fecha,
+        datosPaciente: m.datosPaciente,
+        usuario: {
+          nombre:usuarioAsignado.nombre,
+          // email:usuarioAsignado.email,
+          uid:usuarioAsignado.uid
+        },
+      };
+    });
+    const mensajes = [...arregloPendientes, ...arregloPacientes];
+    // console.log('Enviado');
+    return mensajes;
+  } catch (error) {
+    console.log(error);
+    return MensajeError('Hubo un error al obtener todos los mensajes', error);
+  };
+};
+
 const getChat = async (req, res = response)=>{
   try {
     const {telefono, uid} = req.body;
@@ -91,11 +138,12 @@ const agregarDatosContactoPaciente = async (req, res = response)=>{
     res.status(500).json({
       response: 'No se pudo cargar la conversación'
     });
-  }
-}
+  };
+};
 
 module.exports = {
   agregarDatosContactoPaciente,
   allMessages,
+  allMessagesSocket,
   getChat,
 }
