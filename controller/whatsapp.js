@@ -24,14 +24,14 @@ const processMessage = async (req, messages, additionalData = {}) => {
     const respPendientes = await agregarPendiente(id, messageContent, number, type, context, ...Object.values(additionalData));
     if (!respPendientes.err) {
       req.io.emit('mensajes-sinAsignar', await obtenerPendientes());
-      req.io.to(respPendientes.uid).emit('todos-los-mensajes', await allMessagesSocket()); //Probando para enviar datos
+      req.io.emit('todos-los-mensajes', await allMessagesSocket()); //Probando para enviar datos
     };
   } else if (resExistente.ok) {
     const mensaje = await GuardarMensajeRecibido(id, messageContent, number, type, context, ...Object.values(additionalData));
     const { ultimoMsg, uid } = mensaje;
     req.io.to(uid).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
     req.io.to(uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(resExistente.usuarioAsignado.uid));
-    req.io.to(uid).emit('todos-los-mensajes', 'datos enviados');//probando para enviar datos
+    req.io.to(uid).emit('todos-los-mensajes', await allMessagesSocket());//probando para enviar datos
   };
 };
 
