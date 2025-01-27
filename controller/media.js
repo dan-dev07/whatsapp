@@ -58,6 +58,7 @@ const entregarArchivoBuffer = async (req, res = express.response) => {
 // Configura multer para guardar archivos
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
+                                    //para producción cambiar a /root/whatsapp/controller/uploads
     cb(null, 'controller/uploads'); // Asegúrate de que esta carpeta exista
   },
   filename: (req, file, cb) => {
