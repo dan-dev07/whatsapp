@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3000;
 const server = require('http').createServer(app);
 const io = socketio(server, {
   cors: {
-    origin: ['http:localhost:5174', 'http:189.131.186.39:5174','https://jovial-malasada-025646.netlify.app'],
+    origin: ['http://localhost:5174', 'http://189.131.186.39:5174','https://jovial-malasada-025646.netlify.app'],
     credentials: true,
   }
 });
