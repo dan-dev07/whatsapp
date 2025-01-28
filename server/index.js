@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const { dbConnection } = require('../database/config');
 const socketio = require('socket.io');
+const validarJWT = require('../helpers/validarJWT');
 const { comprobarJWT } = require('../helpers/jwt');
 const { obtenerPendientes, agregarPendiente, agregarDesdePaciente } = require('../controller/sinAsignar');
 const { obtenerPacientesPorUsuario, agregarPaciente, obtenerConversacionActual, guardarMensajeEnviado, quitarUsuario, reasignarPaciente, guardarReplyMensajeEnviado } = require('../controller/paciente');
@@ -29,17 +30,24 @@ app.use((req, res, next) => {
   req.io = io; // Almacena io en req
   next();
 });
+
 //Parseo de los datos que llegan desde postman - Parseo del body
 app.use(express.json());
+
 // CORS
 app.use(cors());
+
+//validar token
+// app.use(validarJWT);
+
 //rutas
-app.use('/api/media', require('../router/media'));
 app.use('/api/Login', require('../router/auth'));
+app.use('/api/media', require('../router/media'));
 app.use('/api/Usuarios', require('../router/usuarios'));
 app.use('/api/whatsapp', require('../router/whatsapp'));
 app.use('/api/datos', require('../router/datos'));
 app.use('/api/ver', require('../router/version'));
+
 //io
 io.on('connection', async (socket) => {
   const [valido, user] = comprobarJWT(socket.handshake.query['auth']);

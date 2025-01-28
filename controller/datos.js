@@ -4,6 +4,37 @@ const SinAsignar = require('../models/sinAsignar');
 const { obtenerPacientesPorUsuario } = require('./paciente');
 const { MensajeError } = require('../helpers/error');
 
+const mensajesSinAsignar = async (req, res = response) => {
+  try {
+    const pendientes = await SinAsignar.find();
+    if (!pendientes) {
+      return [];
+    };
+    const ultimoMensajeArray = pendientes.map(m => {
+      const { mensajes, telefono, uid, datosPaciente } = m;
+      const ultimo = mensajes[mensajes.length - 1];
+      return {
+        telefono,
+        uid,
+        fecha: ultimo.fecha,
+        emisor: ultimo.emisor,
+        tipo: ultimo.tipo,
+        mensaje: ultimo.mensaje,
+        datosPaciente,
+      }
+    });
+    res.status(200).json({
+      mensajes: ultimoMensajeArray
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      response: 'Hubo un error al obtener todos los mensajes'
+    });
+  }
+};
+
 const allMessages = async (req, res = response) => {
   try {
     const mensajesPacientes = await Paciente.find();
@@ -12,14 +43,14 @@ const allMessages = async (req, res = response) => {
       const { mensajes } = m;
       const ultimo = mensajes[mensajes.length - 1];
       return {
-        uid:m.uid,
-        telefono:m.telefono,
+        uid: m.uid,
+        telefono: m.telefono,
         fecha: ultimo.fecha,
-        datosPaciente:m.datosPaciente,
-        usuario:{
-          nombre:'', 
+        datosPaciente: m.datosPaciente,
+        usuario: {
+          nombre: '',
           // email:'', 
-          uid:''
+          uid: ''
         }
       }
     });
@@ -29,15 +60,15 @@ const allMessages = async (req, res = response) => {
       const fecha = chats[chats.length - 1].fecha;
 
       return {
-        nombrepaciente:m.nombrePaciente,
+        nombrepaciente: m.nombrePaciente,
         uid: m.uid,
         telefono: m.telefono,
         fecha,
         datosPaciente: m.datosPaciente,
         usuario: {
-          nombre:usuarioAsignado.nombre,
+          nombre: usuarioAsignado.nombre,
           // email:usuarioAsignado.email,
-          uid:usuarioAsignado.uid
+          uid: usuarioAsignado.uid
         },
       };
     });
@@ -60,14 +91,14 @@ const allMessagesSocket = async () => {
       const { mensajes } = m;
       const ultimo = mensajes[mensajes.length - 1];
       return {
-        uid:m.uid,
-        telefono:m.telefono,
+        uid: m.uid,
+        telefono: m.telefono,
         fecha: ultimo.fecha,
-        datosPaciente:m.datosPaciente,
-        usuario:{
-          nombre:'', 
+        datosPaciente: m.datosPaciente,
+        usuario: {
+          nombre: '',
           // email:'', 
-          uid:''
+          uid: ''
         }
       }
     });
@@ -77,15 +108,15 @@ const allMessagesSocket = async () => {
       const fecha = chats[chats.length - 1].fecha;
 
       return {
-        nombrepaciente:m.nombrePaciente,
+        nombrepaciente: m.nombrePaciente,
         uid: m.uid,
         telefono: m.telefono,
         fecha,
         datosPaciente: m.datosPaciente,
         usuario: {
-          nombre:usuarioAsignado.nombre,
+          nombre: usuarioAsignado.nombre,
           // email:usuarioAsignado.email,
-          uid:usuarioAsignado.uid
+          uid: usuarioAsignado.uid
         },
       };
     });
@@ -98,9 +129,9 @@ const allMessagesSocket = async () => {
   };
 };
 
-const getChat = async (req, res = response)=>{
+const getChat = async (req, res = response) => {
   try {
-    const {telefono, uid} = req.body;
+    const { telefono, uid } = req.body;
     const pacienteActual = await Paciente.findOne({ telefono, 'usuarioAsignado.uid': uid });
     const { chats } = pacienteActual;
     const mensajesLeidos = chats.map(c => {
@@ -112,7 +143,7 @@ const getChat = async (req, res = response)=>{
     const pacienteActualizado = await Paciente.findOneAndUpdate({ telefono, 'usuarioAsignado.uid': uid }, { chats: mensajesLeidos }, { new: true });
     const { chats: chatsAct, datosPaciente } = pacienteActualizado;
     req.io.to(uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(uid));
-    res.send( {chatsAct,datosPaciente} );
+    res.send({ chatsAct, datosPaciente });
   } catch (error) {
     console.log(error);
     res.status(500).json({
@@ -121,18 +152,20 @@ const getChat = async (req, res = response)=>{
   };
 };
 
-const agregarDatosContactoPaciente = async (req, res = response)=>{
+const agregarDatosContactoPaciente = async (req, res = response) => {
   try {
-    const {nombre, apellido, empresa, telefono, uid} = req.body;
+    const { nombre, apellido, empresa, telefono, uid } = req.body;
 
-    const pacienteActualizado = await Paciente.findOneAndUpdate({ telefono, 'usuarioAsignado.uid': uid }, {datosPaciente:{
-      nombre, 
-      apellido,
-      empresa,
-    }}, { new: true });
-    const {datosPaciente} = pacienteActualizado;
+    const pacienteActualizado = await Paciente.findOneAndUpdate({ telefono, 'usuarioAsignado.uid': uid }, {
+      datosPaciente: {
+        nombre,
+        apellido,
+        empresa,
+      }
+    }, { new: true });
+    const { datosPaciente } = pacienteActualizado;
     req.io.to(uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(uid));
-    res.send( datosPaciente );
+    res.send(datosPaciente);
   } catch (error) {
     console.log(error);
     res.status(500).json({
@@ -145,5 +178,6 @@ module.exports = {
   agregarDatosContactoPaciente,
   allMessages,
   allMessagesSocket,
+  mensajesSinAsignar,
   getChat,
 }

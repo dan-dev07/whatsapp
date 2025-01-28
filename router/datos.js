@@ -3,13 +3,15 @@
 */
 
 const {Router} = require('express');
-const { allMessages, getChat, agregarDatosContactoPaciente } = require('../controller/datos');
+const { allMessages, getChat, agregarDatosContactoPaciente, mensajesSinAsignar } = require('../controller/datos');
 const { check } = require('express-validator');
 const { validarCampos } = require('../middlewares/validarCampos');
 const { validarDatoNoNulo } = require('../helpers/funciones');
 const router = Router();
 
 router.get('/allMessages', allMessages);
+
+router.get('/mensajesSinAsignar', mensajesSinAsignar);
 
 router.post('/getChat',[
   check('telefono', 'Necesito un telefono').not().isEmpty(),
