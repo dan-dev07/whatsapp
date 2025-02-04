@@ -10,11 +10,11 @@ const { SendMessageWhatsApp, SendReplyMessageWhatsApp } = require('../controller
 const { actulizarEstado } = require('../controller/usuario');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 const server = require('http').createServer(app);
 const io = socketio(server, {
   cors: {
-    origin: ['http://localhost:5173', 'http://189.131.186.39:5173','https://jovial-malasada-025646.netlify.app'],
+    origin: ['https://wa.altaespecialidad.escotel.mx', 'https://jovial-malasada-025646.netlify.app'],
     credentials: true,
   }
 });
