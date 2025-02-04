@@ -72,7 +72,7 @@ const allMessages = async (req, res = response) => {
         },
       };
     });
-    const mensajes = [...arregloPendientes, ...arregloPacientes];
+    const mensajes = [...arregloPendientes, ...arregloPacientes].sort((a, b) => b.fecha.localeCompare(a.fecha));
     // console.log('Enviado');
     res.send(mensajes);
   } catch (error) {
@@ -120,7 +120,7 @@ const allMessagesSocket = async () => {
         },
       };
     });
-    const mensajes = [...arregloPendientes, ...arregloPacientes];
+    const mensajes = [...arregloPendientes, ...arregloPacientes].sort((a, b) => b.fecha.localeCompare(a.fecha));
     // console.log('Enviado');
     return mensajes;
   } catch (error) {

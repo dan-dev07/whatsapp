@@ -31,7 +31,7 @@ const processMessage = async (req, messages, additionalData = {}) => {
     const { ultimoMsg, uid } = mensaje;
     req.io.to(uid).emit('mensaje-recibido', { ultimo: ultimoMsg, telefono: number });
     req.io.to(uid).emit('mis-mensajes', await obtenerPacientesPorUsuario(resExistente.usuarioAsignado.uid));
-    req.io.to(uid).emit('todos-los-mensajes', await allMessagesSocket());//probando para enviar datos
+    req.io.emit('todos-los-mensajes', await allMessagesSocket());//probando para enviar datos
   };
 };
 

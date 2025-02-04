@@ -3,7 +3,6 @@ const express = require('express');
 const cors = require('cors');
 const { dbConnection } = require('../database/config');
 const socketio = require('socket.io');
-const validarJWT = require('../helpers/validarJWT');
 const { comprobarJWT } = require('../helpers/jwt');
 const { obtenerPendientes, agregarPendiente, agregarDesdePaciente } = require('../controller/sinAsignar');
 const { obtenerPacientesPorUsuario, agregarPaciente, obtenerConversacionActual, guardarMensajeEnviado, quitarUsuario, reasignarPaciente, guardarReplyMensajeEnviado } = require('../controller/paciente');
