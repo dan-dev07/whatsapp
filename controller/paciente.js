@@ -6,10 +6,11 @@ const { MensajeError } = require('../helpers/error');
 
 const agregarPaciente = async (datos) => {
   try {
-    const { telefono, userUid, pacienteUid, ultimaComunicacion, datosPaciente } = datos;
+    const { telefono, userUid, pacienteUid, ultimaComunicacion } = datos;
     const user = await Usuario.findOne({ uid: userUid })
     const pendiente = await SinAsignar.findOne({ telefono, uid: pacienteUid });
-    const chats = pendiente.mensajes;
+    const {datosPaciente, mensajes}  = pendiente;
+    const chats = mensajes;
     const paciente = await Paciente.create({ nombrePaciente: pendiente.nombrePaciente, telefono, uid: pacienteUid, usuarioAsignado: user, ultimaComunicacion, chats, datosPaciente });
     await SinAsignar.findOneAndDelete({ telefono, uid:pacienteUid });
     return ({
@@ -29,7 +30,19 @@ const obtenerPacientesPorUsuario = async (uid) => {
       const { fecha, mensaje, leido, tipo, emisor } = ultimoMsg;
       return { nombrePaciente, telefono, uid, fecha, mensaje, leido, tipo, emisor, datosPaciente };
     });
-    return pacientesPorUsuario.sort((a, b) => a.leido - b.leido);
+    return pacientesPorUsuario.sort((a, b) => {
+      // Convertir las fechas de formato "DD/MM/YYYY, HH:MM:SS" a "YYYY-MM-DD HH:MM:SS"
+      const formatFecha = (fecha) => {
+        const [fechaParte, horaParte] = fecha.split(','); // Separar la fecha de la hora
+        const [dia, mes, año] = fechaParte.split('/'); // Desestructurar la fecha
+        return `${año}-${mes}-${dia} ${horaParte.trim()}`; // Formato "YYYY-MM-DD HH:MM:SS"
+      };
+    
+      const fechaA = new Date(formatFecha(a.fecha));
+      const fechaB = new Date(formatFecha(b.fecha));
+    
+      return fechaA - fechaB; // Comparar las fechas numéricamente
+    }).reverse(); 
   } catch (error) {
     console.log(error)
     return { err: 'No se pudo obtener a los pacientes para el usuario' }
@@ -175,7 +188,7 @@ const reasignarPaciente = async (telefono, nuevoUsuario, anteriorUsuario, pacien
     );
     if (!pacienteActualizado) {
       return { ok: false };
-    }
+    };
     return { ok: true };
   } catch (error) {
     console.log(error);

@@ -152,6 +152,38 @@ const getChat = async (req, res = response) => {
   };
 };
 
+//Paginación
+const getChatPaginacion = async (req, res = response) => {
+  try {
+    const {telefono, uid, pagina, limite = 10} = req.body;
+    const pacienteActual = await Paciente.findOne({telefono, 'usuarioAsignado.uid': uid});
+    const {chats} = pacienteActual;
+    const mensajesLeidos = chats.map(c=> {
+      if (c.emisor === 'Paciente') {
+        c.leido = true;
+      };
+      return c;
+    });
+    const startIndex = (pagina - 1) * limite;
+    const endIndex = page * limite;
+    const mensajesPorPagina = mensajesLeidos.slice(startIndex, endIndex);
+    //Calcular el total de páginas
+    const mensajesTotales = mensajesLeidos.length;
+    const paginasTotales = Math.ceil(mensajesTotales / limite);
+
+    //Enviar mensajes paginados
+    res.status(200).json({
+      mensajesPorPagina,
+      mensajesTotales,
+      pagina,
+      paginasTotales
+    })
+
+  } catch (error) {
+    
+  }
+}
+
 const agregarDatosContactoPaciente = async (req, res = response) => {
   try {
     const { nombre, apellido, empresa, telefono, uid } = req.body;

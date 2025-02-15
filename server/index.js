@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 8080;
 const server = require('http').createServer(app);
 const io = socketio(server, {
   cors: {
-    origin: ['https://wa.altaespecialidad.escotel.mx', 'https://jovial-malasada-025646.netlify.app'],
+    origin: ['http://localhost:5173', 'http://189.131.186.39:5173','https://jovial-malasada-025646.netlify.app'],
     credentials: true,
   }
 });
