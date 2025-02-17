@@ -72,8 +72,19 @@ const allMessages = async (req, res = response) => {
         },
       };
     });
-    const mensajes = [...arregloPendientes, ...arregloPacientes].sort((a, b) => b.fecha.localeCompare(a.fecha));
-    // console.log('Enviado');
+    const mensajes = [...arregloPendientes, ...arregloPacientes].sort((a, b) => {
+      // Convertir las fechas de formato "DD/MM/YYYY, HH:MM:SS" a "YYYY-MM-DD HH:MM:SS"
+      const formatFecha = (fecha) => {
+        const [fechaParte, horaParte] = fecha.split(','); // Separar la fecha de la hora
+        const [dia, mes, año] = fechaParte.split('/'); // Desestructurar la fecha
+        return `${año}-${mes}-${dia} ${horaParte.trim()}`; // Formato "YYYY-MM-DD HH:MM:SS"
+      };
+    
+      const fechaA = new Date(formatFecha(a.fecha));
+      const fechaB = new Date(formatFecha(b.fecha));
+    
+      return fechaA - fechaB; // Comparar las fechas numéricamente
+    }).reverse(); 
     res.send(mensajes);
   } catch (error) {
     console.log(error);
@@ -120,8 +131,19 @@ const allMessagesSocket = async () => {
         },
       };
     });
-    const mensajes = [...arregloPendientes, ...arregloPacientes].sort((a, b) => b.fecha.localeCompare(a.fecha));
-    // console.log('Enviado');
+    const mensajes = [...arregloPendientes, ...arregloPacientes].sort((a, b) => {
+      // Convertir las fechas de formato "DD/MM/YYYY, HH:MM:SS" a "YYYY-MM-DD HH:MM:SS"
+      const formatFecha = (fecha) => {
+        const [fechaParte, horaParte] = fecha.split(','); // Separar la fecha de la hora
+        const [dia, mes, año] = fechaParte.split('/'); // Desestructurar la fecha
+        return `${año}-${mes}-${dia} ${horaParte.trim()}`; // Formato "YYYY-MM-DD HH:MM:SS"
+      };
+    
+      const fechaA = new Date(formatFecha(a.fecha));
+      const fechaB = new Date(formatFecha(b.fecha));
+    
+      return fechaA - fechaB; // Comparar las fechas numéricamente
+    }).reverse(); 
     return mensajes;
   } catch (error) {
     console.log(error);
